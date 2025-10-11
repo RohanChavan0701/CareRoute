@@ -107,6 +107,31 @@ class DummyDatabase:
                     user_bookings.append(self.data["bookings"][booking_id])
         return user_bookings
     
+    def get_user_booking(self, user_id: str) -> Optional[Dict]:
+        """Get the first booking for a user"""
+        bookings = self.get_user_bookings(user_id)
+        return bookings[0] if bookings else None
+    
+    def update_booking(self, user_id: str, booking_data: Dict) -> bool:
+        """Update a booking for a user"""
+        try:
+            bookings = self.get_user_bookings(user_id)
+            if not bookings:
+                return False
+            
+            # Update the first booking
+            booking_id = bookings[0]["booking_id"]
+            if booking_id in self.data["bookings"]:
+                self.data["bookings"][booking_id].update(booking_data)
+                self._save_data()
+                logger.info(f"✅ Updated booking {booking_id} for user {user_id}")
+                return True
+            
+            return False
+        except Exception as e:
+            logger.error(f"❌ Error updating booking: {e}")
+            return False
+    
     def get_user_flights(self, user_id: str) -> List[Dict]:
         """Get all flights for a user"""
         user_flights = []

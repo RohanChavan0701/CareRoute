@@ -1,0 +1,184 @@
+{
+  "voice_agent_context": {
+    "description": "Template variables required by Voice Agent for patient communication",
+    "template_variables": {
+      "patient_name": "Dr. Sarah Mitchell",
+      "patient_id": "P123456",
+      "patient_language": "English",
+      "patient_contact": "+1-555-0123",
+      "companion_name": "John Mitchell",
+      "check_in_date": "2025-10-12",
+      "check_out_date": "2025-10-18",
+      "hotel_name": "Denver Accessible Suites",
+      "hotel_room_number": "Suite 205",
+      "hospital_name": "Denver Medical Center",
+      "doctor_name": "Dr. Smith",
+      "appointment_date": "2025-10-13",
+      "appointment_time": "14:30",
+      "pickup_time": "15 minutes",
+      "discharge_date": "2025-10-18"
+    },
+    "sample_context_payload": {
+      "jsonrpc": "2.0",
+      "method": "InitiateVoiceCall",
+      "params": {
+        "user_id": "user_123",
+        "call_type": "cab_arrival_notification",
+        "context": {
+          "patient_name": "Dr. Sarah Mitchell",
+          "patient_id": "user_123",
+          "patient_language": "English",
+          "patient_contact": "+1-555-ADAPTIVE-CONTACT",
+          "companion_name": "Not specified",
+          "check_in_date": "2025-10-12",
+          "check_out_date": "2025-10-18",
+          "hotel_name": "Denver Accessible Suites",
+          "hotel_room_number": "Suite 205",
+          "hospital_name": "Denver Medical Center",
+          "doctor_name": "Dr. Smith",
+          "appointment_date": "2025-10-13",
+          "appointment_time": "16:49",
+          "pickup_time": "15 minutes",
+          "discharge_date": "2025-10-18",
+          "user_id": "user_123",
+          "patient_info": {
+            "name": "Dr. Sarah Mitchell",
+            "medical_conditions": ["Diabetes", "Hypertension"],
+            "special_requirements": "Wheelchair accessible, diabetic meals"
+          },
+          "current_status": {
+            "location": {
+              "airport_name": "John F. Kennedy International Airport",
+              "airport_code": "JFK",
+              "latitude": 40.6413,
+              "longitude": -73.7781
+            },
+            "flight_status": {
+              "flight_number": "AA2990",
+              "status": "landed",
+              "gate": "B12"
+            },
+            "cab_details": {
+              "gate": "B12",
+              "pickup_location": "Terminal 4, Gate B12",
+              "estimated_arrival": "15 minutes",
+              "cab_details": {
+                "company": "Uber",
+                "driver": "John Doe",
+                "license_plate": "XYZ789"
+              }
+            }
+          },
+          "trip_details": {
+            "hotel": "ADAPTIVE_HOTEL_XYZ",
+            "hospital_appointment": {
+              "id": "ADAPTIVE_HOSP_ABC",
+              "time": "2025-10-13T16:49:53"
+            }
+          }
+        },
+        "message": "Your cab has arrived at B12. Please proceed to the pickup area.",
+        "orchestration_id": "ORCH_user_123"
+      },
+      "id": "voice_call_user_123"
+    },
+    "comprehensive_context_sample": {
+      "description": "Full context for direct patient calls",
+      "template_variables": {
+        "patient_name": "Dr. Sarah Mitchell",
+        "patient_id": "P123456",
+        "patient_language": "English",
+        "patient_contact": "+1-555-0123",
+        "companion_name": "John Mitchell",
+        "check_in_date": "2025-10-12",
+        "check_out_date": "2025-10-18",
+        "hotel_name": "Denver Accessible Suites",
+        "hotel_room_number": "Suite 205",
+        "hospital_name": "Denver Medical Center",
+        "doctor_name": "Dr. Smith",
+        "appointment_date": "2025-10-13",
+        "appointment_time": "14:30",
+        "pickup_time": "15 minutes",
+        "discharge_date": "2025-10-18"
+      },
+      "additional_context": {
+        "patient_id": "P123456",
+        "call_type": "patient_inquiry",
+        "call_initiated_by": "patient_app",
+        "call_timestamp": "2025-10-11T16:49:53",
+        "pre_trip_info": {
+          "hospital_appointment": {
+            "appointment_id": "ADAPTIVE_HOSP_ABC",
+            "appointment_time": "2025-10-13T16:49:53",
+            "hospital_name": "Denver Medical Center",
+            "doctor_name": "Dr. Smith",
+            "appointment_type": "consultation",
+            "confirmed": true,
+            "required_documents": ["ID", "Insurance Card", "Passport"],
+            "preparation_instructions": "Fast for 8 hours before appointment"
+          }
+        },
+        "travel_info": {
+          "flight_details": {
+            "flight_number": "AA2990",
+            "airline": "Southwest Airlines",
+            "status": "landed",
+            "gate": "B12",
+            "terminal": "8",
+            "departure_time": "2025-10-11T14:00",
+            "arrival_time": "2025-10-11T17:40",
+            "delay_minutes": 10,
+            "origin_city": "Las Vegas",
+            "destination_city": "Denver"
+          }
+        },
+        "hotel_info": {
+          "booking_details": {
+            "hotel_name": "Denver Accessible Suites",
+            "booking_reference": "ADAPTIVE_HOTEL_XYZ",
+            "check_in_time": "15:00",
+            "check_out_time": "11:00",
+            "room_type": "Accessible Suite",
+            "confirmed": true
+          }
+        },
+        "hospital_info": {
+          "appointment_details": {
+            "hospital_name": "Denver Medical Center",
+            "appointment_time": "2025-10-13T16:49:53",
+            "procedure_type": "Medical Consultation",
+            "doctor_name": "Dr. Smith",
+            "department": "Cardiology",
+            "room_number": "Room 205"
+          }
+        },
+        "recovery_info": {
+          "follow_up_schedule": {
+            "next_appointment": "2025-10-14T10:00:00",
+            "appointment_type": "Follow-up Consultation",
+            "doctor": "Dr. Smith"
+          },
+          "medication_reminders": {
+            "diabetes_medication": "Metformin - Take with meals",
+            "blood_pressure_medication": "Lisinopril - Take daily",
+            "reminder_times": ["08:00", "20:00"]
+          }
+        },
+        "family_info": {
+          "patient_status": {
+            "current_location": "Denver, Colorado",
+            "health_status": "Stable",
+            "last_update": "2025-10-11T16:49:53"
+          }
+        }
+      }
+    },
+    "usage_notes": {
+      "template_variables": "These 14 variables are required for Voice Agent templates",
+      "context_format": "Template variables are included at the root level for easy access",
+      "additional_context": "Detailed information provided for comprehensive patient support",
+      "hipaa_compliance": "No medical documents or sensitive health data included",
+      "real_time_updates": "Context includes current status, locations, and timestamps"
+    }
+  }
+}

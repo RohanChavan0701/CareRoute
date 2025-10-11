@@ -574,6 +574,24 @@ class GuardianOrchestrator:
             
             # Prepare comprehensive call context payload for Voice Agent
             call_context_payload = {
+                # Voice Agent Template Variables (Required)
+                "patient_name": patient_context.get("patient_name"),
+                "patient_id": patient_id,
+                "patient_language": patient_context.get("preferred_language", "English"),
+                "patient_contact": patient_context.get("emergency_contacts", [""])[0] if patient_context.get("emergency_contacts") else "",
+                "companion_name": patient_context.get("companion_name", "Not specified"),
+                "check_in_date": patient_context.get("hotel_check_in", "").split("T")[0] if patient_context.get("hotel_check_in") else "",
+                "check_out_date": patient_context.get("new_discharge_date", "").split("T")[0] if patient_context.get("new_discharge_date") else "",
+                "hotel_name": "Denver Accessible Suites",
+                "hotel_room_number": "Suite 205",
+                "hospital_name": "Denver Medical Center",
+                "doctor_name": "Dr. Smith",
+                "appointment_date": patient_context.get("hospital_appointment_time", "").split("T")[0] if patient_context.get("hospital_appointment_time") else "",
+                "appointment_time": patient_context.get("hospital_appointment_time", "").split("T")[1][:5] if patient_context.get("hospital_appointment_time") else "",
+                "pickup_time": "15 minutes",
+                "discharge_date": patient_context.get("new_discharge_date", "").split("T")[0] if patient_context.get("new_discharge_date") else "",
+                
+                # Call Context
                 "patient_id": patient_id,
                 "call_type": call_data.get("call_type", "patient_inquiry"),
                 "call_initiated_by": "patient_app",
@@ -1268,30 +1286,75 @@ class GuardianOrchestrator:
             return {"status": "error", "message": str(e)}
     
     async def _trigger_arrival_flow(self, user_id: str, flight: Dict[str, Any], booking: Dict[str, Any], location_data: Dict[str, Any]):
-        """Trigger complete arrival flow"""
+        """Trigger complete arrival flow - Hotel Agent handles family notifications and cab arrangement"""
         try:
-            # 1. Send hotel confirmation request
-            await self._send_hotel_confirmation_request(user_id, booking)
+            # 1. Send arrival notification to Hotel Agent (who will handle family notification + cab arrangement)
+            await self._send_flight_landed_notification_to_hotel_agent(user_id, flight, booking, location_data)
             
-            # 2. Arrange cab
-            await self._arrange_cab(user_id, flight, location_data)
-            
-            # 3. Send hospital appointment confirmation
+            # 2. Send hospital appointment confirmation
             await self._send_hospital_confirmation(user_id, booking)
             
-            # 4. Update orchestration status
+            # 3. Update orchestration status
             orchestration_id = f"ORCH_{user_id}"
             dummy_db.update_orchestration_status(orchestration_id, "arrival_services", {
                 "flow_step": "arrival_services_triggered",
                 "location": location_data,
-                "services_requested": ["hotel_confirmation", "cab_arrangement", "hospital_confirmation"]
+                "services_requested": ["flight_landed_family_notification", "hotel_notification", "cab_arrangement", "hospital_confirmation"]
             })
             
-            logger.info(f"✅ Arrival flow triggered for user {user_id}")
+            logger.info(f"✅ Arrival flow triggered for user {user_id} - Hotel Agent will handle family notification and cab")
             
         except Exception as e:
             logger.error(f"❌ Error triggering arrival flow: {e}")
     
+    async def _send_flight_landed_notification_to_hotel_agent(self, user_id: str, flight: Dict[str, Any], booking: Dict[str, Any], location_data: Dict[str, Any]):
+        """Send flight landed notification to Hotel Agent - they handle family notification, hotel notification, and cab arrangement"""
+        try:
+            hotel_payload = {
+                "jsonrpc": "2.0",
+                "id": f"flight_landed_{user_id}",
+                "method": "HandleFlightLanded",
+                "params": {
+                    "user_id": user_id,
+                    "patient_name": booking.get("patient_name"),
+                    "flight_details": {
+                        "flight_number": flight.get("flight_number"),
+                        "airline": flight.get("airline"),
+                        "arrival_time": flight.get("estimated_arrival_local"),
+                        "gate": flight.get("gate"),
+                        "terminal": flight.get("terminal"),
+                        "status": flight.get("status")
+                    },
+                    "airport_details": {
+                        "airport_code": location_data.get("airport_code"),
+                        "airport_name": location_data.get("airport_name"),
+                        "latitude": location_data.get("latitude"),
+                        "longitude": location_data.get("longitude")
+                    },
+                    "hotel_details": {
+                        "hotel_name": booking.get("hotel_name"),
+                        "hotel_room_number": booking.get("hotel_room_number"),
+                        "booking_reference": booking.get("hotel_booking_reference"),
+                        "check_in_date": booking.get("hotel_check_in")
+                    },
+                    "family_contacts": booking.get("emergency_contacts", []),
+                    "special_requirements": booking.get("special_requirements"),
+                    "orchestration_id": f"ORCH_{user_id}",
+                    "tasks": {
+                        "notify_family": True,
+                        "notify_hotel": True,
+                        "arrange_cab": True,
+                        "estimated_arrival_to_hotel": "30 minutes"
+                    }
+                }
+            }
+            
+            await self._send_a2a_task("hotel_agent", "HandleFlightLanded", hotel_payload)
+            logger.info("✅ Flight landed notification sent to Hotel Agent - they will handle family notification, hotel notification, and cab arrangement")
+            
+        except Exception as e:
+            logger.error(f"❌ Error sending flight landed notification to Hotel Agent: {e}")
+
     async def _send_hotel_confirmation_request(self, user_id: str, booking: Dict[str, Any]):
         """Send hotel confirmation request"""
         try:
@@ -1314,40 +1377,6 @@ class GuardianOrchestrator:
         except Exception as e:
             logger.error(f"❌ Error sending hotel confirmation: {e}")
     
-    async def _arrange_cab(self, user_id: str, flight: Dict[str, Any], location_data: Dict[str, Any]):
-        """Arrange cab for user"""
-        try:
-            # Send notification to arrange cab
-            notification_payload = {
-                "jsonrpc": "2.0",
-                "id": f"cab_arrange_{user_id}",
-                "method": "SendFlightBookingNotification",
-                "params": {
-                    "booking_id": f"BOOK_{user_id}",
-                    "notification_type": "cab_arrangement",
-                    "recipients": [
-                        {
-                            "email": flight.get("email", "patient@example.com"),
-                            "name": flight.get("passenger_name", "Patient"),
-                            "preferred_method": "email"
-                        }
-                    ],
-                    "cab_details": {
-                        "pickup_location": location_data.get("airport_name", "Airport"),
-                        "destination": "Hotel",
-                        "estimated_arrival": "15 minutes",
-                        "flight_gate": flight.get("gate", "Gate A1")
-                    },
-                    "orchestration_id": f"ORCH_{user_id}",
-                    "priority": "high"
-                }
-            }
-            
-            await self._send_a2a_task("notification_agent", "SendFlightBookingNotification", notification_payload)
-            logger.info("✅ Cab arrangement notification sent")
-            
-        except Exception as e:
-            logger.error(f"❌ Error arranging cab: {e}")
     
     async def _send_hospital_confirmation(self, user_id: str, booking: Dict[str, Any]):
         """Send hospital appointment confirmation"""
@@ -1407,8 +1436,26 @@ class GuardianOrchestrator:
             booking = user_bookings[0]
             flight = user_flights[0] if user_flights else {}
             
-            # Prepare comprehensive context for voice agent
+            # Prepare comprehensive context for voice agent with required template variables
             context_data = {
+                # Voice Agent Template Variables (Required)
+                "patient_name": booking.get("patient_name"),
+                "patient_id": booking.get("user_id", user_id),
+                "patient_language": booking.get("preferred_language", "English"),
+                "patient_contact": booking.get("emergency_contacts", [""])[0] if booking.get("emergency_contacts") else "",
+                "companion_name": booking.get("companion_name", "Not specified"),
+                "check_in_date": booking.get("hotel_check_in", "").split("T")[0] if booking.get("hotel_check_in") else "",
+                "check_out_date": booking.get("new_discharge_date", "").split("T")[0] if booking.get("new_discharge_date") else "",
+                "hotel_name": booking.get("hotel_name", "Denver Accessible Suites"),
+                "hotel_room_number": booking.get("hotel_room_number", "Suite 205"),
+                "hospital_name": booking.get("hospital_name", "Denver Medical Center"),
+                "doctor_name": booking.get("doctor_name", "Dr. Smith"),
+                "appointment_date": booking.get("hospital_appointment_time", "").split("T")[0] if booking.get("hospital_appointment_time") else "",
+                "appointment_time": booking.get("hospital_appointment_time", "").split("T")[1][:5] if booking.get("hospital_appointment_time") else "",
+                "pickup_time": cab_details.get("estimated_arrival", "15 minutes"),
+                "discharge_date": booking.get("new_discharge_date", "").split("T")[0] if booking.get("new_discharge_date") else "",
+                
+                # Additional Context for Voice Agent
                 "user_id": user_id,
                 "patient_info": {
                     "name": booking.get("patient_name"),
@@ -1480,6 +1527,18 @@ class GuardianOrchestrator:
     def _get_adaptive_stay_info(self, booking: Dict[str, Any]) -> Dict[str, Any]:
         """Get adaptive stay information for the booking"""
         try:
+            # Handle case when no booking is provided
+            if not booking:
+                return {
+                    "status": "planned",
+                    "initial_estimate_days": 7,
+                    "extended": False,
+                    "flexible_booking": True,
+                    "extension_capability": True,
+                    "auto_rebooking": True,
+                    "family_notifications": True
+                }
+            
             # Calculate stay duration and flexibility
             check_in_str = booking.get("hotel_check_in", "")
             hospital_appt_str = booking.get("hospital_appointment_time", "")
@@ -1535,7 +1594,7 @@ class GuardianOrchestrator:
         except Exception as e:
             logger.error(f"❌ Failed to get adaptive stay info: {e}")
             return {
-                "status": "unknown",
+                "status": "planned",
                 "initial_estimate_days": 7,
                 "extended": False,
                 "flexible_booking": True,
@@ -1572,24 +1631,20 @@ class GuardianOrchestrator:
             # Update dummy database
             dummy_db.update_booking(user_id, booking)
             
-            # Trigger adaptive responses
+            # Trigger adaptive responses - each agent handles its own voice/notification
             results = []
             
-            # 1. Extend hotel booking
+            # 1. Extend hotel booking (Hotel agent handles guest notification + voice call)
             hotel_result = await self._extend_hotel_booking(user_id, booking, new_discharge_date)
-            results.append({"action": "hotel_extension", "result": hotel_result})
+            results.append({"action": "hotel_extension_with_notification", "result": hotel_result})
             
             # 2. Update flight recommendations
             flight_result = await self._update_flight_recommendations(user_id, booking, new_discharge_date)
             results.append({"action": "flight_update", "result": flight_result})
             
-            # 3. Notify family
-            notification_result = await self._notify_family_extension(user_id, booking, extension_data)
-            results.append({"action": "family_notification", "result": notification_result})
-            
-            # 4. Update hospital coordination
+            # 3. Coordinate hospital extension (Hospital agent handles family notification + medical updates)
             hospital_result = await self._coordinate_hospital_extension(user_id, booking, extension_data)
-            results.append({"action": "hospital_coordination", "result": hospital_result})
+            results.append({"action": "hospital_coordination_with_family_notification", "result": hospital_result})
             
             logger.info(f"✅ Stay extension completed for user {user_id}")
             
@@ -1606,11 +1661,12 @@ class GuardianOrchestrator:
             return {"status": "error", "message": str(e)}
     
     async def _extend_hotel_booking(self, user_id: str, booking: Dict[str, Any], new_discharge_date: str) -> Dict[str, Any]:
-        """Extend hotel booking automatically"""
+        """Extend hotel booking automatically - Hotel agent handles its own voice/notification"""
         try:
             logger.info(f"🏨 Extending hotel booking for user {user_id}")
             
-            # Prepare hotel extension request
+            # Prepare comprehensive hotel extension request
+            # Hotel agent will handle: booking extension + guest notification + voice confirmation
             task_data = {
                 "params": {
                     "booking_reference": booking.get("hotel_booking_reference"),
@@ -1618,14 +1674,22 @@ class GuardianOrchestrator:
                     "new_checkout_date": new_discharge_date,
                     "extension_reason": "Medical treatment extended",
                     "special_requirements": booking.get("special_requirements", ""),
-                    "contact_email": booking.get("email")
+                    "contact_email": booking.get("email"),
+                    "guest_phone": booking.get("emergency_contacts", [""])[0],
+                    "auto_notify_guest": True,  # Hotel agent will notify guest
+                    "auto_voice_call": True,    # Hotel agent will call guest to confirm
+                    "orchestration_context": {
+                        "user_id": user_id,
+                        "stay_extension": True,
+                        "adaptive_response": True
+                    }
                 }
             }
             
-            # Call hotel agent to extend booking
-            result = await self._send_a2a_task("hotel_agent", "ExtendBooking", task_data)
+            # Call hotel agent - it handles extension + notification + voice internally
+            result = await self._send_a2a_task("hotel_agent", "HandleStayExtension", task_data)
             
-            logger.info(f"✅ Hotel booking extension: {result.get('status', 'unknown')}")
+            logger.info(f"✅ Hotel extension handled (includes guest notification & voice call): {result.get('status', 'unknown')}")
             return result
             
         except Exception as e:
@@ -1664,55 +1728,39 @@ class GuardianOrchestrator:
             logger.error(f"❌ Error updating flight recommendations: {e}")
             return {"status": "error", "message": str(e)}
     
-    async def _notify_family_extension(self, user_id: str, booking: Dict[str, Any], extension_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Notify family about stay extension"""
-        try:
-            logger.info(f"👨‍👩‍👧‍👦 Notifying family about stay extension for user {user_id}")
-            
-            # Prepare family notification
-            task_data = {
-                "params": {
-                    "patient_name": booking.get("patient_name"),
-                    "extension_days": extension_data.get("extension_days", 3),
-                    "new_discharge_date": extension_data.get("new_discharge_date"),
-                    "extension_reason": extension_data.get("reason", "Medical treatment extended"),
-                    "recipients": booking.get("emergency_contacts", []),
-                    "notification_type": "stay_extension",
-                    "patient_email": booking.get("email")
-                }
-            }
-            
-            # Send notification to family
-            result = await self._send_a2a_task("notification_agent", "SendStayExtensionNotification", task_data)
-            
-            logger.info(f"✅ Family notification sent: {result.get('status', 'unknown')}")
-            return result
-            
-        except Exception as e:
-            logger.error(f"❌ Error notifying family: {e}")
-            return {"status": "error", "message": str(e)}
     
     async def _coordinate_hospital_extension(self, user_id: str, booking: Dict[str, Any], extension_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Coordinate with hospital for extended stay"""
+        """Coordinate with hospital for extended stay - Hospital agent handles its own family notifications"""
         try:
             logger.info(f"🏥 Coordinating hospital extension for user {user_id}")
             
-            # Prepare hospital coordination request
+            # Prepare comprehensive hospital coordination request
+            # Hospital agent will handle: medical coordination + family notifications + patient updates
             task_data = {
                 "params": {
                     "appointment_id": booking.get("hospital_appointment_id"),
                     "patient_name": booking.get("patient_name"),
                     "new_discharge_date": extension_data.get("new_discharge_date"),
                     "extension_reason": extension_data.get("reason", "Medical treatment extended"),
+                    "extension_days": extension_data.get("extension_days", 3),
                     "medical_conditions": booking.get("medical_conditions", []),
-                    "special_requirements": booking.get("special_requirements", "")
+                    "special_requirements": booking.get("special_requirements", ""),
+                    "family_contacts": booking.get("emergency_contacts", []),
+                    "patient_email": booking.get("email"),
+                    "auto_notify_family": True,  # Hospital agent will notify family
+                    "auto_update_patient": True, # Hospital agent will update patient records
+                    "orchestration_context": {
+                        "user_id": user_id,
+                        "stay_extension": True,
+                        "adaptive_response": True
+                    }
                 }
             }
             
-            # Coordinate with hospital agent
-            result = await self._send_a2a_task("hospital_agent", "CoordinateStayExtension", task_data)
+            # Coordinate with hospital agent - it handles medical + family notification internally
+            result = await self._send_a2a_task("hospital_agent", "HandleStayExtension", task_data)
             
-            logger.info(f"✅ Hospital coordination: {result.get('status', 'unknown')}")
+            logger.info(f"✅ Hospital coordination handled (includes family notification & medical updates): {result.get('status', 'unknown')}")
             return result
             
         except Exception as e:

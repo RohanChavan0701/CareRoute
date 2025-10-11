@@ -719,14 +719,14 @@ async def handle_stay_extension(request: StayExtensionRequest):
         # Emit AG-UI event
         emit_agui_event(
             "stay_extended",
-            request.user_id,
-            None,
             {
                 "extension_days": request.extension_days,
                 "new_discharge_date": request.new_discharge_date,
                 "reason": request.reason,
                 "adaptive_response": result.get("adaptive_response", "automatic")
-            }
+            },
+            request.user_id,
+            None
         )
         
         return {
