@@ -12,6 +12,9 @@ from datetime import datetime
 import base64
 import os
 
+# Setup logger first
+logger = logging.getLogger(__name__)
+
 # Optional imports for HIPAA encryption
 try:
     from cryptography.fernet import Fernet
@@ -29,8 +32,6 @@ try:
 except ImportError:
     OPENAI_AVAILABLE = False
     logger.warning("⚠️ OpenAI not available - LLM features disabled")
-
-logger = logging.getLogger(__name__)
 
 class HIPAAEncryption:
     """HIPAA-compliant encryption for sensitive patient data"""
