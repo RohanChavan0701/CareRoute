@@ -10,8 +10,8 @@ import json
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 import httpx
-from knowledge_base import knowledge_base
-from dummy_data import dummy_db
+from .knowledge_base import knowledge_base
+from .dummy_data import dummy_db
 
 # Configure logging
 logging.basicConfig(

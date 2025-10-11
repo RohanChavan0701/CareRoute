@@ -19,8 +19,8 @@ from pydantic import BaseModel, Field
 import uvicorn
 
 # Import our orchestrator and scheduler
-from orchestrator import guardian_orchestrator
-from scheduler import guardian_scheduler
+from .orchestrator import guardian_orchestrator
+from .scheduler import guardian_scheduler
 # Removed booking integration - handled by frontend
 
 # Configure logging

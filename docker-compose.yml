@@ -2,36 +2,124 @@ version: '3.8'
 
 services:
   guardian-orchestrator:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
     container_name: guardian-orchestrator
     ports:
       - "8000:8000"
     environment:
-      - ENVIRONMENT=development
+      # Application Settings
+      - ENVIRONMENT=production
+      - DEBUG=false
       - LOG_LEVEL=INFO
+      - SECRET_KEY=${SECRET_KEY:-your-production-secret-key}
+      
       # External agent endpoints (AWS URLs for production)
-      - HOTEL_AGENT_URL=https://hotel-agent.aws.region.elb.amazonaws.com
-      - HOSPITAL_AGENT_URL=https://hospital-agent.aws.region.elb.amazonaws.com
-      - VOICE_AGENT_URL=https://voice-agent.aws.region.elb.amazonaws.com
-      - NOTIFICATION_AGENT_URL=https://notification-agent.aws.region.elb.amazonaws.com
-      - FLIGHT_AGENT_URL=https://flight-agent.aws.region.elb.amazonaws.com
+      - HOTEL_AGENT_URL=${HOTEL_AGENT_URL:-https://hotel-agent.aws.region.elb.amazonaws.com}
+      - HOSPITAL_AGENT_URL=${HOSPITAL_AGENT_URL:-https://hospital-agent.aws.region.elb.amazonaws.com}
+      - VOICE_AGENT_URL=${VOICE_AGENT_URL:-https://voice-agent.aws.region.elb.amazonaws.com}
+      - NOTIFICATION_AGENT_URL=${NOTIFICATION_AGENT_URL:-https://notification-system-h36d.onrender.com/a2a/tasks}
+      - FLIGHT_AGENT_URL=${FLIGHT_AGENT_URL:-http://54.158.27.0:8001/a2a}
+      
+      # LLM Integration (Optional)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      
+      # Security Settings
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-jwt-secret-key}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-your-encryption-key-32-chars-long}
+      
+      # HIPAA Compliance
+      - HIPAA_MODE=true
+      - AUDIT_LOG_ENABLED=true
+      - DATA_RETENTION_DAYS=2555
+      
+      # Monitoring
+      - PROMETHEUS_ENABLED=true
+      - HEALTH_CHECK_INTERVAL_HOURS=1
+      
     volumes:
-      - .:/app
-    command: python orchestrator.py
+      - guardian_logs:/app/logs
+      - guardian_data:/app/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import orchestrator; print('Orchestrator healthy')"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/ag-ui/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    networks:
+      - guardian-network
 
-  # External agent services (deployed separately on AWS by other teams)
-  # These are commented out for local development only
-  # In production, these will be deployed as separate ECS services on AWS
-  
-  # hotel-agent: (Deployed on AWS by hotel team)
-  # hospital-agent: (Deployed on AWS by hospital team)  
-  # voice-agent: (Deployed on AWS by voice team)
-  # notification-agent: (Deployed on AWS by notification team)
-  # flight-agent: (Deployed on AWS by flight team)
+  # Optional: Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    container_name: guardian-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-guardian_redis_pass}
+    networks:
+      - guardian-network
+    profiles:
+      - with-redis
+
+  # Optional: PostgreSQL for persistent data (if needed)
+  postgres:
+    image: postgres:15-alpine
+    container_name: guardian-postgres
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-guardian_db}
+      - POSTGRES_USER=${POSTGRES_USER:-guardian}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-guardian_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - guardian-network
+    profiles:
+      - with-postgres
+
+  # Nginx reverse proxy for production
+  nginx:
+    image: nginx:alpine
+    container_name: guardian-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - guardian-orchestrator
+    restart: unless-stopped
+    networks:
+      - guardian-network
+    profiles:
+      - with-nginx
+
+volumes:
+  guardian_logs:
+    driver: local
+  guardian_data:
+    driver: local
+  redis_data:
+    driver: local
+  postgres_data:
+    driver: local
+
+networks:
+  guardian-network:
+    driver: bridge
