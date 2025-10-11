@@ -445,69 +445,29 @@ class GuardianOrchestrator:
             
             logger.info(f"🤖 Sending A2A task: {method} to {agent_id}")
             
-            # In production, this would make real HTTP requests
-            # For now, we'll simulate the A2A communication
+            # Make real HTTP requests to external agents
             async with httpx.AsyncClient() as client:
                 try:
-                    # Real A2A call would be:
-                    # response = await client.post(f"{agent_url}/a2a/tasks", json=a2a_request)
-                    # return response.json()
+                    # For flight agent, use the /a2a endpoint directly
+                    if agent_id == "flight_agent":
+                        response = await client.post(agent_url, json=a2a_request, timeout=10.0)
+                    else:
+                        # For other agents, use the /a2a/tasks endpoint
+                        response = await client.post(f"{agent_url}/a2a/tasks", json=a2a_request, timeout=10.0)
                     
-                    # Simulate successful response based on agent type
-                    await asyncio.sleep(0.5)  # Simulate processing time
+                    response_data = response.json()
+                    logger.info(f"✅ A2A response from {agent_id}: {response.status_code}")
+                    return response_data
                     
-                    # Return different responses based on agent and method
-                    if agent_id == "flight_agent" and task_data["method"] == "get_flight_status":
-                        # Return realistic flight agent response format
-                        flight_num = task_data["params"]["flight_num"]
-                        departure_date = task_data["params"]["departure_date"]
-                        
-                        return {
-                            "jsonrpc": "2.0",
-                            "id": a2a_request["id"],
-                            "result": {
-                                "flight_data": {
-                                    "airline": "SWA",
-                                    "flight_number": flight_num,
-                                    "origin_iata": "LAS",
-                                    "origin_city": "Las Vegas",
-                                    "origin_tz": "America/Los_Angeles",
-                                    "destination_iata": "DEN",
-                                    "destination_city": "Denver",
-                                    "destination_tz": "America/Denver",
-                                    "scheduled_departure_local": f"{departure_date}T09:00",
-                                    "estimated_departure_local": f"{departure_date}T09:00",
-                                    "scheduled_arrival_local": f"{departure_date}T12:00",
-                                    "estimated_arrival_local": f"{departure_date}T12:00",
-                                    "gate": "B22",
-                                    "terminal": "3",
-                                    "status": "BOARDING",
-                                    "delay_minutes": None
-                                },
-                                "script": {
-                                    "text": f"Flight {flight_num} from Las Vegas to Denver is currently boarding at gate B22.",
-                                    "ssml": f"<speak>Flight {flight_num} from Las Vegas to Denver is currently boarding at gate B22.</speak>",
-                                    "style": "conversational",
-                                    "locale": "en-US"
-                                },
-                                "hash": "mock_hash_123",
-                                "generated_at": datetime.now().isoformat() + "Z",
-                                "schema_version": "flight.status.v1"
-                            }
-                        }
-                    
-                    simulated_response = {
-                        "jsonrpc": "2.0",
-                        "id": a2a_request["id"],
-                        "result": {
-                            "status": "success",
-                            "message": f"Task {task_data['method']} completed successfully",
-                            "timestamp": datetime.now().isoformat()
-                        }
-                    }
-                    
-                    logger.info(f"✅ A2A task {task_data['method']} completed successfully with {agent_id}")
-                    return simulated_response
+                except httpx.TimeoutException:
+                    logger.error(f"⏰ Timeout calling {agent_id}")
+                    return {"error": "timeout", "message": f"Timeout calling {agent_id}"}
+                except httpx.ConnectError:
+                    logger.error(f"🔌 Connection error to {agent_id}")
+                    return {"error": "connection_error", "message": f"Cannot connect to {agent_id}"}
+                except Exception as e:
+                    logger.error(f"❌ Error calling {agent_id}: {e}")
+                    return {"error": "api_error", "message": str(e)}
                     
                 except httpx.RequestError as e:
                     logger.error(f"❌ A2A request failed to {agent_id}: {e}")
@@ -1499,6 +1459,9 @@ class GuardianOrchestrator:
             orchestration_id = f"ORCH_{user_id}"
             orchestration = dummy_db.data.get("orchestrations", {}).get(orchestration_id, {})
             
+            # Get adaptive stay information
+            stay_info = self._get_adaptive_stay_info(user_bookings[0] if user_bookings else {})
+            
             return {
                 "user_id": user_id,
                 "bookings": user_bookings,
@@ -1506,12 +1469,318 @@ class GuardianOrchestrator:
                 "current_location": user_location,
                 "orchestration_status": orchestration.get("status", "unknown"),
                 "flow_step": orchestration.get("flow_step", "initial"),
-                "last_updated": orchestration.get("updated_at", orchestration.get("created_at"))
+                "last_updated": orchestration.get("updated_at", orchestration.get("created_at")),
+                "adaptive_stay": stay_info
             }
             
         except Exception as e:
             logger.error(f"❌ Error getting trip status: {e}")
             return {"status": "error", "message": str(e)}
+    
+    def _get_adaptive_stay_info(self, booking: Dict[str, Any]) -> Dict[str, Any]:
+        """Get adaptive stay information for the booking"""
+        try:
+            # Calculate stay duration and flexibility
+            check_in_str = booking.get("hotel_check_in", "")
+            hospital_appt_str = booking.get("hospital_appointment_time", "")
+            
+            # Parse dates
+            check_in_date = None
+            hospital_date = None
+            
+            if check_in_str:
+                try:
+                    check_in_date = datetime.fromisoformat(check_in_str.replace('Z', '+00:00'))
+                except:
+                    pass
+            
+            if hospital_appt_str:
+                try:
+                    hospital_date = datetime.fromisoformat(hospital_appt_str.replace('Z', '+00:00'))
+                except:
+                    pass
+            
+            # Calculate initial stay estimate
+            initial_stay_days = 7  # Default estimate
+            if check_in_date and hospital_date:
+                diff_days = (hospital_date - check_in_date).days
+                initial_stay_days = max(diff_days + 3, 7)  # At least 3 days after treatment
+            
+            # Determine stay status
+            current_date = datetime.now()
+            stay_status = "planned"
+            
+            if check_in_date and current_date >= check_in_date:
+                stay_status = "active"
+            
+            if hospital_date and current_date >= hospital_date:
+                stay_status = "treatment_phase"
+            
+            # Check for extensions
+            extended = False
+            if booking.get("stay_extended", False):
+                extended = True
+                stay_status = "extended"
+            
+            return {
+                "status": stay_status,
+                "initial_estimate_days": initial_stay_days,
+                "extended": extended,
+                "flexible_booking": True,
+                "extension_capability": True,
+                "auto_rebooking": True,
+                "family_notifications": True
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to get adaptive stay info: {e}")
+            return {
+                "status": "unknown",
+                "initial_estimate_days": 7,
+                "extended": False,
+                "flexible_booking": True,
+                "extension_capability": True,
+                "auto_rebooking": True,
+                "family_notifications": True
+            }
+    
+    # ==================== ADAPTIVE STAY MANAGEMENT ====================
+    
+    async def handle_stay_extension(self, user_id: str, extension_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle hospital stay extension - the core adaptive feature"""
+        try:
+            logger.info(f"🏥 Processing stay extension for user {user_id}")
+            
+            # Get current booking
+            booking = dummy_db.get_user_booking(user_id)
+            if not booking:
+                return {"status": "error", "message": "No booking found"}
+            
+            # Extract extension details
+            new_discharge_date = extension_data.get("new_discharge_date")
+            extension_reason = extension_data.get("reason", "Medical treatment extended")
+            extension_days = extension_data.get("extension_days", 3)
+            
+            logger.info(f"📅 Extending stay by {extension_days} days until {new_discharge_date}")
+            
+            # Update booking with extension
+            booking["stay_extended"] = True
+            booking["extension_reason"] = extension_reason
+            booking["new_discharge_date"] = new_discharge_date
+            booking["extension_days"] = extension_days
+            
+            # Update dummy database
+            dummy_db.update_booking(user_id, booking)
+            
+            # Trigger adaptive responses
+            results = []
+            
+            # 1. Extend hotel booking
+            hotel_result = await self._extend_hotel_booking(user_id, booking, new_discharge_date)
+            results.append({"action": "hotel_extension", "result": hotel_result})
+            
+            # 2. Update flight recommendations
+            flight_result = await self._update_flight_recommendations(user_id, booking, new_discharge_date)
+            results.append({"action": "flight_update", "result": flight_result})
+            
+            # 3. Notify family
+            notification_result = await self._notify_family_extension(user_id, booking, extension_data)
+            results.append({"action": "family_notification", "result": notification_result})
+            
+            # 4. Update hospital coordination
+            hospital_result = await self._coordinate_hospital_extension(user_id, booking, extension_data)
+            results.append({"action": "hospital_coordination", "result": hospital_result})
+            
+            logger.info(f"✅ Stay extension completed for user {user_id}")
+            
+            return {
+                "status": "success",
+                "message": f"Stay extended by {extension_days} days",
+                "new_discharge_date": new_discharge_date,
+                "actions_completed": results,
+                "adaptive_response": "automatic"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error handling stay extension: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    async def _extend_hotel_booking(self, user_id: str, booking: Dict[str, Any], new_discharge_date: str) -> Dict[str, Any]:
+        """Extend hotel booking automatically"""
+        try:
+            logger.info(f"🏨 Extending hotel booking for user {user_id}")
+            
+            # Prepare hotel extension request
+            task_data = {
+                "params": {
+                    "booking_reference": booking.get("hotel_booking_reference"),
+                    "guest_name": booking.get("patient_name"),
+                    "new_checkout_date": new_discharge_date,
+                    "extension_reason": "Medical treatment extended",
+                    "special_requirements": booking.get("special_requirements", ""),
+                    "contact_email": booking.get("email")
+                }
+            }
+            
+            # Call hotel agent to extend booking
+            result = await self._send_a2a_task("hotel_agent", "ExtendBooking", task_data)
+            
+            logger.info(f"✅ Hotel booking extension: {result.get('status', 'unknown')}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"❌ Error extending hotel booking: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    async def _update_flight_recommendations(self, user_id: str, booking: Dict[str, Any], new_discharge_date: str) -> Dict[str, Any]:
+        """Update flight recommendations based on new discharge date"""
+        try:
+            logger.info(f"✈️ Updating flight recommendations for user {user_id}")
+            
+            # Get current flight
+            flight = dummy_db.get_user_flight(user_id)
+            if not flight:
+                return {"status": "no_flight", "message": "No flight found"}
+            
+            # Prepare flight update request
+            task_data = {
+                "params": {
+                    "flight_number": flight.get("flight_number"),
+                    "original_date": flight.get("departure_date"),
+                    "new_departure_date": new_discharge_date,
+                    "passenger_name": booking.get("patient_name"),
+                    "booking_reference": flight.get("flight_id"),
+                    "change_reason": "Medical treatment extended"
+                }
+            }
+            
+            # Call flight agent for rebooking options
+            result = await self._send_a2a_task("flight_agent", "GetRebookingOptions", task_data)
+            
+            logger.info(f"✅ Flight rebooking options: {result.get('status', 'unknown')}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"❌ Error updating flight recommendations: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    async def _notify_family_extension(self, user_id: str, booking: Dict[str, Any], extension_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Notify family about stay extension"""
+        try:
+            logger.info(f"👨‍👩‍👧‍👦 Notifying family about stay extension for user {user_id}")
+            
+            # Prepare family notification
+            task_data = {
+                "params": {
+                    "patient_name": booking.get("patient_name"),
+                    "extension_days": extension_data.get("extension_days", 3),
+                    "new_discharge_date": extension_data.get("new_discharge_date"),
+                    "extension_reason": extension_data.get("reason", "Medical treatment extended"),
+                    "recipients": booking.get("emergency_contacts", []),
+                    "notification_type": "stay_extension",
+                    "patient_email": booking.get("email")
+                }
+            }
+            
+            # Send notification to family
+            result = await self._send_a2a_task("notification_agent", "SendStayExtensionNotification", task_data)
+            
+            logger.info(f"✅ Family notification sent: {result.get('status', 'unknown')}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"❌ Error notifying family: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    async def _coordinate_hospital_extension(self, user_id: str, booking: Dict[str, Any], extension_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Coordinate with hospital for extended stay"""
+        try:
+            logger.info(f"🏥 Coordinating hospital extension for user {user_id}")
+            
+            # Prepare hospital coordination request
+            task_data = {
+                "params": {
+                    "appointment_id": booking.get("hospital_appointment_id"),
+                    "patient_name": booking.get("patient_name"),
+                    "new_discharge_date": extension_data.get("new_discharge_date"),
+                    "extension_reason": extension_data.get("reason", "Medical treatment extended"),
+                    "medical_conditions": booking.get("medical_conditions", []),
+                    "special_requirements": booking.get("special_requirements", "")
+                }
+            }
+            
+            # Coordinate with hospital agent
+            result = await self._send_a2a_task("hospital_agent", "CoordinateStayExtension", task_data)
+            
+            logger.info(f"✅ Hospital coordination: {result.get('status', 'unknown')}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"❌ Error coordinating with hospital: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    async def check_daily_treatment_updates(self) -> Dict[str, Any]:
+        """Check for daily treatment updates from hospital - adaptive scheduling"""
+        try:
+            logger.info("🔄 Checking daily treatment updates...")
+            
+            # Get all active patients
+            all_bookings = dummy_db.data.get("bookings", {})
+            updates_found = 0
+            
+            for booking_id, booking in all_bookings.items():
+                if booking.get("status") == "confirmed":
+                    user_id = booking.get("user_id")
+                    appointment_id = booking.get("hospital_appointment_id")
+                    
+                    # Check for hospital updates (simulated)
+                    hospital_update = await self._check_hospital_status(appointment_id)
+                    
+                    if hospital_update and hospital_update.get("discharge_date_changed"):
+                        logger.info(f"📅 Discharge date changed for user {user_id}")
+                        
+                        # Handle automatic extension
+                        extension_data = {
+                            "new_discharge_date": hospital_update.get("new_discharge_date"),
+                            "reason": hospital_update.get("reason", "Treatment progress updated"),
+                            "extension_days": hospital_update.get("extension_days", 2)
+                        }
+                        
+                        await self.handle_stay_extension(user_id, extension_data)
+                        updates_found += 1
+            
+            logger.info(f"📊 Daily treatment check completed. Found {updates_found} updates.")
+            
+            return {
+                "status": "success",
+                "updates_found": updates_found,
+                "message": f"Checked {len(all_bookings)} active patients"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error checking daily treatment updates: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    async def _check_hospital_status(self, appointment_id: str) -> Dict[str, Any]:
+        """Check hospital status for treatment updates (simulated)"""
+        try:
+            # In real implementation, this would call hospital API
+            # For demo, we'll simulate occasional updates
+            
+            import random
+            if random.random() < 0.1:  # 10% chance of update
+                return {
+                    "discharge_date_changed": True,
+                    "new_discharge_date": (datetime.now() + timedelta(days=3)).isoformat(),
+                    "reason": "Recovery progressing well, extended monitoring recommended",
+                    "extension_days": 2
+                }
+            
+            return {"discharge_date_changed": False}
+            
+        except Exception as e:
+            logger.error(f"❌ Error checking hospital status: {e}")
+            return {"discharge_date_changed": False}
 
 # Global orchestrator instance
 guardian_orchestrator = GuardianOrchestrator()

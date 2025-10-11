@@ -18,8 +18,9 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 import uvicorn
 
-# Import our orchestrator and database
+# Import our orchestrator and scheduler
 from orchestrator import guardian_orchestrator
+from scheduler import guardian_scheduler
 # Removed booking integration - handled by frontend
 
 # Configure logging
@@ -156,6 +157,14 @@ class CabArrivalRequest(BaseModel):
     estimated_arrival: str = "15 minutes"
     cab_details: Dict[str, Any] = {}
 
+class StayExtensionRequest(BaseModel):
+    """Stay extension request model"""
+    user_id: str
+    new_discharge_date: str
+    reason: str = "Medical treatment extended"
+    extension_days: int = 3
+    notify_family: bool = True
+
 # Global event storage and session management
 active_sessions: Dict[str, Dict[str, Any]] = {}
 active_events: Dict[str, List[AGUIEvent]] = {}
@@ -171,9 +180,17 @@ async def lifespan(app: FastAPI):
     # Orchestrator is already initialized when imported
     logger.info("✅ Guardian Orchestrator ready")
     
+    # Start the scheduler
+    await guardian_scheduler.start()
+    logger.info("✅ Guardian Scheduler started")
+    
     yield
     
     logger.info("🛑 Guardian A2A Orchestrator AG-UI Backend shutting down...")
+    
+    # Stop the scheduler
+    await guardian_scheduler.stop()
+    logger.info("✅ Guardian Scheduler stopped")
 
 # Create FastAPI app
 app = FastAPI(
@@ -666,6 +683,143 @@ async def get_trip_status(user_id: str):
         
     except Exception as e:
         logger.error(f"❌ Failed to get trip status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/guardian/scheduler/status")
+async def get_scheduler_status():
+    """Get scheduler status and job information"""
+    try:
+        status = await guardian_scheduler.get_scheduler_status()
+        
+        return {
+            "status": "success",
+            "data": status,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get scheduler status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==================== ADAPTIVE STAY MANAGEMENT ENDPOINTS ====================
+
+@app.post("/guardian/stay/extension")
+async def handle_stay_extension(request: StayExtensionRequest):
+    """Handle hospital stay extension - the core adaptive feature"""
+    try:
+        extension_data = {
+            "new_discharge_date": request.new_discharge_date,
+            "reason": request.reason,
+            "extension_days": request.extension_days,
+            "notify_family": request.notify_family
+        }
+        
+        result = await guardian_orchestrator.handle_stay_extension(request.user_id, extension_data)
+        
+        # Emit AG-UI event
+        emit_agui_event(
+            "stay_extended",
+            request.user_id,
+            None,
+            {
+                "extension_days": request.extension_days,
+                "new_discharge_date": request.new_discharge_date,
+                "reason": request.reason,
+                "adaptive_response": result.get("adaptive_response", "automatic")
+            }
+        )
+        
+        return {
+            "status": "success",
+            "data": result,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to handle stay extension: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/guardian/treatment/check-updates")
+async def check_treatment_updates(request: UserRequest):
+    """Manually trigger treatment update check"""
+    try:
+        result = await guardian_orchestrator.check_daily_treatment_updates()
+        
+        return {
+            "status": "success",
+            "data": result,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to check treatment updates: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/guardian/stay/timeline/{user_id}")
+async def get_adaptive_timeline(user_id: str):
+    """Get adaptive timeline view for the frontend"""
+    try:
+        # Get trip status with adaptive stay info
+        trip_status = await guardian_orchestrator.get_user_trip_status(user_id)
+        
+        if trip_status.get("status") == "error":
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Build adaptive timeline
+        booking = trip_status.get("bookings", [{}])[0]
+        adaptive_stay = trip_status.get("adaptive_stay", {})
+        
+        timeline = {
+            "user_id": user_id,
+            "current_status": adaptive_stay.get("status", "unknown"),
+            "phases": [
+                {
+                    "phase": "arrival",
+                    "status": "completed" if trip_status.get("current_location") else "planned",
+                    "description": "Patient arrival and airport pickup"
+                },
+                {
+                    "phase": "hotel_checkin",
+                    "status": "completed" if adaptive_stay.get("status") == "active" else "planned",
+                    "description": "Hotel check-in and accommodation"
+                },
+                {
+                    "phase": "treatment",
+                    "status": "completed" if adaptive_stay.get("status") == "treatment_phase" else "planned",
+                    "description": "Medical treatment and hospital care"
+                },
+                {
+                    "phase": "recovery",
+                    "status": "ongoing" if adaptive_stay.get("status") in ["treatment_phase", "extended"] else "planned",
+                    "description": "Recovery period and monitoring"
+                },
+                {
+                    "phase": "departure",
+                    "status": "pending",
+                    "description": "Flight departure and return home"
+                }
+            ],
+            "adaptive_features": {
+                "flexible_booking": adaptive_stay.get("flexible_booking", True),
+                "auto_extension": adaptive_stay.get("extension_capability", True),
+                "family_notifications": adaptive_stay.get("family_notifications", True),
+                "extended": adaptive_stay.get("extended", False)
+            },
+            "stay_details": {
+                "initial_estimate_days": adaptive_stay.get("initial_estimate_days", 7),
+                "extension_reason": booking.get("extension_reason"),
+                "new_discharge_date": booking.get("new_discharge_date")
+            }
+        }
+        
+        return {
+            "status": "success",
+            "data": timeline,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get adaptive timeline: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
