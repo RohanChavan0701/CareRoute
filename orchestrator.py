@@ -10,6 +10,7 @@ import json
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 import httpx
+from knowledge_base import knowledge_base
 
 # Configure logging
 logging.basicConfig(
@@ -30,8 +31,9 @@ class GuardianOrchestrator:
             "hotel_agent": os.getenv("HOTEL_AGENT_URL", "https://hotel-agent.aws.region.elb.amazonaws.com"),
             "hospital_agent": os.getenv("HOSPITAL_AGENT_URL", "https://hospital-agent.aws.region.elb.amazonaws.com"),
             "voice_agent": os.getenv("VOICE_AGENT_URL", "https://voice-agent.aws.region.elb.amazonaws.com"),
-            "notification_agent": os.getenv("NOTIFICATION_AGENT_URL", "https://notification-agent.aws.region.elb.amazonaws.com"),
+            "notification_agent": os.getenv("NOTIFICATION_AGENT_URL", "https://notification-system-h36d.onrender.com/a2a/tasks"),
             "flight_agent": os.getenv("FLIGHT_AGENT_URL", "https://flight-agent.aws.region.elb.amazonaws.com"),
+            "accessibility_agent": os.getenv("ACCESSIBILITY_AGENT_URL", "https://accessibility-agent.aws.region.elb.amazonaws.com"),
         }
         
         # Agent health status
@@ -40,7 +42,10 @@ class GuardianOrchestrator:
         # Active orchestrations
         self.active_orchestrations = {}
         
-        logger.info("Guardian A2A Orchestrator initialized")
+        # Initialize HIPAA-compliant Knowledge Base
+        self.knowledge_base = knowledge_base
+        
+        logger.info("Guardian A2A Orchestrator with Knowledge Base initialized")
     
     async def start_orchestration(self, booking_data: Dict[str, Any]) -> str:
         """
@@ -64,14 +69,17 @@ class GuardianOrchestrator:
         }
         
         try:
-            # Step 1: Start flight monitoring
+            # Step 1: Accessibility Assessment
+            await self._orchestrate_accessibility_assessment(orchestration_id, booking_data)
+            
+            # Step 2: Start flight monitoring
             await self._orchestrate_flight_monitoring(orchestration_id, booking_data)
             
-            # Step 2: Wait for coordination trigger (in real system, this would be event-driven)
+            # Step 3: Wait for coordination trigger (in real system, this would be event-driven)
             # For now, we'll simulate the trigger after a short delay
             await asyncio.sleep(2)
             
-            # Step 3: Execute coordination workflow
+            # Step 4: Execute coordination workflow
             await self._execute_coordination_workflow(orchestration_id, booking_data)
             
             # Mark orchestration as completed
@@ -88,6 +96,39 @@ class GuardianOrchestrator:
             self.active_orchestrations[orchestration_id]["error"] = str(e)
             raise
     
+    async def _orchestrate_accessibility_assessment(self, orchestration_id: str, booking_data: Dict[str, Any]):
+        """Orchestrates accessibility assessment with the Accessibility Agent."""
+        patient_id = booking_data["patient_id"]
+        logger.info(f"♿ Orchestrating accessibility assessment for {patient_id}")
+
+        try:
+            task_payload = {
+                "patient_id": patient_id,
+                "medical_conditions": booking_data.get("medical_conditions", []),
+                "special_requirements": booking_data.get("special_requirements", ""),
+                "age": booking_data.get("age"),
+                "flight_number": booking_data["flight_number"],
+                "destination": booking_data.get("arrival_airport")
+            }
+            result = await self._send_a2a_task("accessibility_agent", {"method": "AssessAccessibilityNeeds", "params": task_payload})
+            self.active_orchestrations[orchestration_id]["tasks"]["accessibility_assessment"] = {
+                "agent": "accessibility_agent",
+                "task": "AssessAccessibilityNeeds",
+                "result": result,
+                "timestamp": datetime.now()
+            }
+            logger.info(f"✅ Accessibility assessment orchestrated for {patient_id}")
+        except Exception as e:
+            logger.error(f"❌ Failed to orchestrate accessibility assessment for {patient_id}: {e}")
+            self.active_orchestrations[orchestration_id]["status"] = "failed"
+            self.active_orchestrations[orchestration_id]["tasks"]["accessibility_assessment"] = {
+                "agent": "accessibility_agent",
+                "task": "AssessAccessibilityNeeds",
+                "result": {"status": "failed", "error": str(e)},
+                "timestamp": datetime.now()
+            }
+            raise
+
     async def _orchestrate_flight_monitoring(self, orchestration_id: str, booking_data: Dict[str, Any]):
         """Orchestrate flight monitoring with Flight Agent"""
         patient_id = booking_data["patient_id"]
@@ -96,26 +137,51 @@ class GuardianOrchestrator:
         logger.info(f"✈️ Orchestrating flight monitoring for {flight_number}")
         
         task_data = {
-            "method": "TrackFlight",
+            "method": "get_flight_status",
             "params": {
-                "flight_number": flight_number,
-                "passenger_id": patient_id,
-                "flight_date": booking_data["flight_date"],
-                "flight_time": booking_data["flight_time"],
-                "departure_airport": booking_data["departure_airport"],
-                "arrival_airport": booking_data["arrival_airport"],
-                "coordination_threshold_hours": 6,  # Trigger coordination 6 hours before ETA
-                "orchestration_id": orchestration_id
+                "flight_num": flight_number,
+                "departure_date": booking_data["flight_date"],
+                "locale": "en-US",
+                "user_id": patient_id
             }
         }
         
         # Send A2A task to Flight Agent
         result = await self._send_a2a_task("flight_agent", task_data)
         
+        # Handle flight agent response in JSON-RPC format
+        if result.get("jsonrpc") == "2.0" and "result" in result:
+            # Extract flight data from the actual flight agent response
+            flight_data = result["result"].get("flight_data", {})
+            
+            # Store flight data for knowledge base context
+            self.active_orchestrations[orchestration_id]["flight_data"] = flight_data
+            
+            # Update knowledge base with patient context
+            await self.update_knowledge_base_context(orchestration_id, booking_data, flight_data)
+            
+            # Log flight information
+            if flight_data:
+                logger.info(f"📊 Flight Status: {flight_data.get('status', 'Unknown')}")
+                logger.info(f"   Route: {flight_data.get('origin_city', 'Unknown')} → {flight_data.get('destination_city', 'Unknown')}")
+                if flight_data.get('delay_minutes'):
+                    logger.info(f"   Delay: {flight_data['delay_minutes']} minutes")
+            
+            # Update result with flight data
+            result["flight_data"] = flight_data
+            
+            # Log flight status for coordination decisions
+            logger.info(f"✅ Flight {flight_number} status: {flight_data['status']}")
+            logger.info(f"   Gate: {flight_data['gate']}, Terminal: {flight_data['terminal']}")
+            logger.info(f"   ETA: {flight_data['estimated_arrival_local']}")
+            delay_info = f"{flight_data['delay_minutes']} minutes" if flight_data['delay_minutes'] else "No delay"
+            logger.info(f"   Delay: {delay_info}")
+            logger.info(f"   Route: {flight_data['origin_city']} → {flight_data['destination_city']}")
+        
         # Store task result
         self.active_orchestrations[orchestration_id]["tasks"]["flight_monitoring"] = {
             "agent": "flight_agent",
-            "task": "TrackFlight",
+            "task": "get_flight_status",
             "result": result,
             "timestamp": datetime.now().isoformat()
         }
@@ -133,7 +199,8 @@ class GuardianOrchestrator:
             self._coordinate_hotel(orchestration_id, booking_data),
             self._coordinate_hospital(orchestration_id, booking_data),
             self._coordinate_notifications(orchestration_id, booking_data),
-            self._coordinate_voice_communication(orchestration_id, booking_data)
+            self._coordinate_voice_communication(orchestration_id, booking_data),
+            self._coordinate_accessibility_services(orchestration_id, booking_data)
         ]
         
         # Execute coordination tasks in parallel
@@ -225,14 +292,35 @@ class GuardianOrchestrator:
         logger.info(f"📱 Coordinating with Notification Agent for {patient_id}")
         
         task_data = {
-            "method": "SendFamilyUpdate",
+            "method": "SendFlightBookingNotification",
             "params": {
-                "patient_id": patient_id,
-                "flight_number": booking_data["flight_number"],
-                "family_contacts": booking_data["emergency_contacts"],
-                "message_type": "coordination_started",
-                "status": "Guardian coordination activated",
-                "orchestration_id": orchestration_id
+                "booking_id": f"FLIGHT_{booking_data['flight_number']}_{patient_id}",
+                "notification_type": "booking_confirmation",
+                "recipients": [
+                    {
+                        "email": booking_data.get("patient_email"),
+                        "name": booking_data.get("patient_name"),
+                        "preferred_method": "email"
+                    }
+                ],
+                "flight_details": {
+                    "airline": "Southwest Airlines",
+                    "flight_number": booking_data["flight_number"],
+                    "confirmation_number": f"WN{booking_data['flight_number']}",
+                    "passenger_name": booking_data.get("patient_name"),
+                    "origin_iata": booking_data["departure_airport"],
+                    "origin_city": "Las Vegas",
+                    "destination_iata": booking_data["arrival_airport"],
+                    "destination_city": "Denver",
+                    "departure_time": f"{booking_data['flight_date']}T{booking_data.get('flight_time', '09:00')}:00",
+                    "arrival_time": f"{booking_data['flight_date']}T12:00:00",
+                    "gate": "B22",
+                    "terminal": "3",
+                    "seat_number": "12A",
+                    "baggage_allowance": "2 checked bags, 1 carry-on"
+                },
+                "orchestration_id": orchestration_id,
+                "priority": "normal"
             }
         }
         
@@ -279,6 +367,64 @@ class GuardianOrchestrator:
         logger.info(f"✅ Voice coordination completed for {patient_id}")
         return result
     
+    async def _coordinate_accessibility_services(self, orchestration_id: str, booking_data: Dict[str, Any]):
+        """Coordinate accessibility services with the Accessibility Agent."""
+        patient_id = booking_data["patient_id"]
+        logger.info(f"♿ Coordinating accessibility services for {patient_id}")
+        
+        try:
+            # Get accessibility assessment results if available
+            accessibility_assessment = self.active_orchestrations[orchestration_id]["tasks"].get("accessibility_assessment", {})
+            accessibility_needs = accessibility_assessment.get("result", {}).get("accessibility_needs", {})
+            
+            # Coordinate mobility assistance
+            mobility_payload = {
+                "patient_id": patient_id,
+                "flight_number": booking_data["flight_number"],
+                "arrival_airport": booking_data.get("arrival_airport"),
+                "mobility_needs": accessibility_needs.get("mobility_assistance", [])
+            }
+            mobility_result = await self._send_a2a_task("accessibility_agent", {"method": "CoordinateMobilityAssistance", "params": mobility_payload})
+            
+            # Coordinate medical equipment if needed
+            equipment_payload = {
+                "patient_id": patient_id,
+                "medical_conditions": booking_data.get("medical_conditions", []),
+                "equipment_needs": accessibility_needs.get("medical_equipment", [])
+            }
+            equipment_result = await self._send_a2a_task("accessibility_agent", {"method": "CoordinateMedicalEquipment", "params": equipment_payload})
+            
+            # Verify accessible accommodations
+            accommodation_payload = {
+                "patient_id": patient_id,
+                "hotel_booking_reference": booking_data.get("hotel_booking_reference"),
+                "accessibility_needs": accessibility_needs
+            }
+            accommodation_result = await self._send_a2a_task("accessibility_agent", {"method": "VerifyAccessibleAccommodations", "params": accommodation_payload})
+            
+            # Store results
+            self.active_orchestrations[orchestration_id]["tasks"]["accessibility_coordination"] = {
+                "agent": "accessibility_agent",
+                "tasks": ["CoordinateMobilityAssistance", "CoordinateMedicalEquipment", "VerifyAccessibleAccommodations"],
+                "results": {
+                    "mobility_assistance": mobility_result,
+                    "medical_equipment": equipment_result,
+                    "accommodation_verification": accommodation_result
+                },
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            logger.info(f"✅ Accessibility services coordinated for {patient_id}")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to coordinate accessibility services for {patient_id}: {e}")
+            self.active_orchestrations[orchestration_id]["tasks"]["accessibility_coordination"] = {
+                "agent": "accessibility_agent",
+                "task": "CoordinateAccessibilityServices",
+                "result": {"status": "failed", "error": str(e)},
+                "timestamp": datetime.now().isoformat()
+            }
+    
     async def _send_a2a_task(self, agent_id: str, task_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Send A2A task to external agent
@@ -306,8 +452,48 @@ class GuardianOrchestrator:
                     # response = await client.post(f"{agent_url}/a2a/tasks", json=a2a_request)
                     # return response.json()
                     
-                    # Simulate successful response
+                    # Simulate successful response based on agent type
                     await asyncio.sleep(0.5)  # Simulate processing time
+                    
+                    # Return different responses based on agent and method
+                    if agent_id == "flight_agent" and task_data["method"] == "get_flight_status":
+                        # Return realistic flight agent response format
+                        flight_num = task_data["params"]["flight_num"]
+                        departure_date = task_data["params"]["departure_date"]
+                        
+                        return {
+                            "jsonrpc": "2.0",
+                            "id": a2a_request["id"],
+                            "result": {
+                                "flight_data": {
+                                    "airline": "SWA",
+                                    "flight_number": flight_num,
+                                    "origin_iata": "LAS",
+                                    "origin_city": "Las Vegas",
+                                    "origin_tz": "America/Los_Angeles",
+                                    "destination_iata": "DEN",
+                                    "destination_city": "Denver",
+                                    "destination_tz": "America/Denver",
+                                    "scheduled_departure_local": f"{departure_date}T09:00",
+                                    "estimated_departure_local": f"{departure_date}T09:00",
+                                    "scheduled_arrival_local": f"{departure_date}T12:00",
+                                    "estimated_arrival_local": f"{departure_date}T12:00",
+                                    "gate": "B22",
+                                    "terminal": "3",
+                                    "status": "BOARDING",
+                                    "delay_minutes": None
+                                },
+                                "script": {
+                                    "text": f"Flight {flight_num} from Las Vegas to Denver is currently boarding at gate B22.",
+                                    "ssml": f"<speak>Flight {flight_num} from Las Vegas to Denver is currently boarding at gate B22.</speak>",
+                                    "style": "conversational",
+                                    "locale": "en-US"
+                                },
+                                "hash": "mock_hash_123",
+                                "generated_at": datetime.now().isoformat() + "Z",
+                                "schema_version": "flight.status.v1"
+                            }
+                        }
                     
                     simulated_response = {
                         "jsonrpc": "2.0",
@@ -357,6 +543,542 @@ class GuardianOrchestrator:
     def get_all_orchestrations(self) -> Dict[str, Dict[str, Any]]:
         """Get all active orchestrations"""
         return self.active_orchestrations
+    
+    async def update_knowledge_base_context(self, orchestration_id: str, booking_data: Dict[str, Any], flight_data: Dict[str, Any]):
+        """Update knowledge base with patient context data"""
+        try:
+            patient_id = booking_data["patient_id"]
+            
+            # Prepare context data for knowledge base
+            context_data = {
+                "patient_id": patient_id,
+                "patient_name": booking_data.get("patient_name"),
+                "patient_email": booking_data.get("patient_email"),  # Add email for notifications
+                "flight_data": flight_data,
+                "hotel_booking_reference": booking_data.get("hotel_booking_reference"),
+                "hospital_appointment_id": booking_data.get("hospital_appointment_id"),
+                "emergency_contacts": booking_data.get("emergency_contacts", []),
+                "special_requirements": booking_data.get("special_requirements", ""),
+                "medical_conditions": booking_data.get("medical_conditions", []),
+                "age": booking_data.get("age"),
+                "preferred_language": booking_data.get("preferred_language", "English"),
+                "orchestration_status": self.active_orchestrations[orchestration_id].get("status"),
+                "hotel_status": "confirmed",  # Dummy data
+                "hospital_status": "confirmed"  # Dummy data
+            }
+            
+            # Update knowledge base with encrypted patient data
+            await self.knowledge_base.update_patient_context(patient_id, context_data)
+            
+            logger.info(f"🧠 Updated knowledge base context for patient {patient_id}")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to update knowledge base context: {e}")
+    
+    async def handle_knowledge_query(self, question: str, patient_id: str) -> Dict[str, Any]:
+        """Handle knowledge base queries from agents"""
+        try:
+            logger.info(f"🧠 Processing knowledge query from {patient_id}: {question}")
+            
+            # Get answer from knowledge base
+            response = await self.knowledge_base.answer_question(question, patient_id)
+            
+            # Log the query for audit purposes
+            logger.info(f"✅ Knowledge query processed - Intent: {response.get('intent', 'unknown')}")
+            
+            return response
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to process knowledge query: {e}")
+            return {
+                "status": "error",
+                "message": "I apologize, but I'm experiencing technical difficulties. Please try again or contact support.",
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    async def handle_incoming_call(self, patient_id: str, call_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle incoming call from patient - send complete context to Voice Agent"""
+        try:
+            logger.info(f"📞 Incoming call from patient {patient_id}")
+            
+            # Get complete patient context
+            patient_context = await self._get_complete_patient_context(patient_id)
+            
+            if not patient_context:
+                return {
+                    "status": "error",
+                    "message": f"No active orchestration found for patient {patient_id}",
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            # Prepare comprehensive call context payload for Voice Agent
+            call_context_payload = {
+                "patient_id": patient_id,
+                "call_type": call_data.get("call_type", "patient_inquiry"),
+                "call_initiated_by": "patient_app",
+                "call_timestamp": datetime.now().isoformat(),
+                "patient_context": patient_context,
+                
+                # 🏥 Pre-Trip / Planning Information
+                "pre_trip_info": {
+                    "hospital_appointment": {
+                        "appointment_id": patient_context.get("hospital_appointment_id"),
+                        "appointment_time": patient_context.get("hospital_appointment_time"),
+                        "hospital_name": "Denver Medical Center",  # From hospital agent
+                        "doctor_name": "Dr. Smith",
+                        "appointment_type": "consultation",
+                        "confirmed": patient_context.get("hospital_status") == "confirmed",
+                        "required_documents": ["ID", "Insurance Card", "Passport"],
+                        "preparation_instructions": "Fast for 8 hours before appointment"
+                    },
+                    "travel_documents": {
+                        "passport_required": True,
+                        "visa_status": "Valid",
+                        "medical_insurance": "Travel Medical Insurance Active",
+                        "emergency_contacts_list": patient_context.get("emergency_contacts", [])
+                    }
+                },
+                
+                # ✈️ Travel & Transit Information
+                "travel_info": {
+                    "flight_details": {
+                        "flight_number": patient_context.get("flight_data", {}).get("flight_number"),
+                        "airline": patient_context.get("flight_data", {}).get("airline", "Southwest Airlines"),
+                        "status": patient_context.get("flight_data", {}).get("status"),
+                        "gate": patient_context.get("flight_data", {}).get("gate"),
+                        "terminal": patient_context.get("flight_data", {}).get("terminal"),
+                        "departure_time": patient_context.get("flight_data", {}).get("scheduled_departure_local"),
+                        "arrival_time": patient_context.get("flight_data", {}).get("estimated_arrival_local"),
+                        "delay_minutes": patient_context.get("flight_data", {}).get("delay_minutes"),
+                        "origin_city": patient_context.get("flight_data", {}).get("origin_city"),
+                        "destination_city": patient_context.get("flight_data", {}).get("destination_city")
+                    },
+                    "airport_pickup": {
+                        "arranged": True,
+                        "driver_name": "John Smith",
+                        "driver_phone": "+1-555-DRIVER",
+                        "vehicle_type": "Wheelchair Accessible Vehicle",
+                        "meeting_location": "Baggage Claim Area",
+                        "driver_instructions": "Will hold sign with patient name"
+                    },
+                    "return_flight": {
+                        "flight_number": "WN124",  # Return flight
+                        "departure_time": "2025-10-15T16:00:00",
+                        "gate": "A15",
+                        "terminal": "1"
+                    }
+                },
+                
+                # 🏨 Arrival / Hotel Information
+                "hotel_info": {
+                    "booking_details": {
+                        "hotel_name": "Denver Accessible Suites",
+                        "booking_reference": patient_context.get("hotel_booking_reference"),
+                        "check_in_time": "15:00",
+                        "check_out_time": "11:00",
+                        "room_type": "Accessible Suite",
+                        "confirmed": patient_context.get("hotel_status") == "confirmed"
+                    },
+                    "hotel_services": {
+                        "wheelchair_accessible": True,
+                        "medical_equipment_storage": True,
+                        "dietary_accommodations": True,
+                        "concierge_services": True,
+                        "translation_services": ["Spanish", "French", "German"]
+                    },
+                    "hotel_contact": {
+                        "phone": "+1-303-HOTEL-01",
+                        "address": "123 Medical Tourism Ave, Denver, CO",
+                        "concierge_email": "concierge@denveraccessible.com"
+                    }
+                },
+                
+                # 🏥 Hospital / Treatment Information
+                "hospital_info": {
+                    "appointment_details": {
+                        "hospital_name": "Denver Medical Center",
+                        "appointment_time": patient_context.get("hospital_appointment_time"),
+                        "procedure_type": "Medical Consultation",
+                        "doctor_name": "Dr. Smith",
+                        "department": "Cardiology",
+                        "room_number": "Room 205"
+                    },
+                    "hospital_services": {
+                        "family_notification": True,
+                        "patient_portal_access": True,
+                        "emergency_protocols": "24/7 Emergency Contact Available"
+                    },
+                    "family_communication": {
+                        "auto_notifications": True,
+                        "emergency_contacts": patient_context.get("emergency_contacts", []),
+                        "status_updates": "Real-time via SMS and Email"
+                    }
+                },
+                
+                # ❤️ Recovery / Follow-Up Information
+                "recovery_info": {
+                    "follow_up_schedule": {
+                        "next_appointment": "2025-10-14T10:00:00",
+                        "appointment_type": "Follow-up Consultation",
+                        "doctor": "Dr. Smith"
+                    },
+                    "medication_reminders": {
+                        "diabetes_medication": "Metformin - Take with meals",
+                        "blood_pressure_medication": "Lisinopril - Take daily",
+                        "reminder_times": ["08:00", "20:00"]
+                    },
+                    "emergency_contacts": {
+                        "medical_emergency": "911",
+                        "guardian_emergency": "+1-800-MED-HELP",
+                        "family_contacts": patient_context.get("emergency_contacts", [])
+                    }
+                },
+                
+                # 🧳 Return / Travel Home Information
+                "return_travel_info": {
+                    "return_flight": {
+                        "flight_number": "WN124",
+                        "departure_time": "2025-10-15T16:00:00",
+                        "gate": "A15",
+                        "terminal": "1",
+                        "status": "Confirmed"
+                    },
+                    "airport_assistance": {
+                        "wheelchair_service": True,
+                        "priority_boarding": True,
+                        "medical_equipment_transport": True
+                    },
+                    "transportation_arrangements": {
+                        "hotel_to_airport": "Scheduled pickup at 14:00",
+                        "driver_contact": "+1-555-DRIVER",
+                        "vehicle_type": "Wheelchair Accessible"
+                    }
+                },
+                
+                # 👨‍👩‍👧 Family / Companion Information
+                "family_info": {
+                    "patient_status": {
+                        "current_location": "Denver, Colorado",
+                        "health_status": "Stable",
+                        "last_update": datetime.now().isoformat()
+                    },
+                    "family_communication": {
+                        "emergency_contacts": patient_context.get("emergency_contacts", []),
+                        "auto_notifications": True,
+                        "status_updates_enabled": True
+                    },
+                    "companion_services": {
+                        "family_accommodation": "Nearby hotel arranged",
+                        "visiting_hours": "09:00-21:00",
+                        "family_support_contact": "+1-800-FAMILY"
+                    }
+                },
+                
+                # 📞 Additional Support Information
+                "support_info": {
+                    "language_preferences": {
+                        "primary": patient_context.get("preferred_language", "English"),
+                        "available_languages": ["English", "Spanish", "French", "German"]
+                    },
+                    "accessibility_support": {
+                        "wheelchair_accessible": True,
+                        "mobility_assistance": True,
+                        "dietary_accommodations": True,
+                        "medical_equipment_support": True
+                    },
+                    "emergency_protocols": {
+                        "medical_emergency": "Call 911 immediately",
+                        "travel_emergency": "+1-800-TRAVEL-HELP",
+                        "guardian_support": "+1-800-GUARDIAN"
+                    }
+                }
+            }
+            
+            # Send context to Voice Agent
+            task_data = {
+                "method": "ReceiveCallContext",
+                "params": call_context_payload
+            }
+            
+            result = await self._send_a2a_task("voice_agent", task_data)
+            
+            # Store call context sharing result
+            if patient_id in [data.get("patient_id") for data in self.active_orchestrations.values()]:
+                for orchestration_id, orchestration_data in self.active_orchestrations.items():
+                    if orchestration_data.get("patient_id") == patient_id:
+                        orchestration_data["tasks"]["call_context_shared"] = {
+                            "agent": "voice_agent",
+                            "task": "ReceiveCallContext",
+                            "result": result,
+                            "timestamp": datetime.now().isoformat(),
+                            "call_data": call_data
+                        }
+                        break
+            
+            logger.info(f"✅ Patient context shared with Voice Agent for {patient_id}")
+            
+            return {
+                "status": "success",
+                "message": "Patient context successfully shared with Voice Agent",
+                "call_context_id": result.get("call_context_id"),
+                "voice_agent_ready": True,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to handle incoming call for {patient_id}: {e}")
+            return {
+                "status": "error",
+                "message": "Failed to share context with Voice Agent",
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    async def handle_schedule_amendment(self, patient_id: str, amendment_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle schedule amendments from Voice Agent"""
+        try:
+            logger.info(f"📅 Processing schedule amendment for patient {patient_id}")
+            
+            # Find active orchestration
+            orchestration_id = None
+            for oid, data in self.active_orchestrations.items():
+                if data.get("patient_id") == patient_id:
+                    orchestration_id = oid
+                    break
+            
+            if not orchestration_id:
+                return {
+                    "status": "error",
+                    "message": f"No active orchestration found for patient {patient_id}",
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            # Process different types of amendments
+            amendment_type = amendment_data.get("amendment_type")
+            
+            if amendment_type == "flight_change":
+                await self._handle_flight_amendment(orchestration_id, amendment_data)
+            elif amendment_type == "hotel_change":
+                await self._handle_hotel_amendment(orchestration_id, amendment_data)
+            elif amendment_type == "hospital_appointment_change":
+                await self._handle_hospital_amendment(orchestration_id, amendment_data)
+            elif amendment_type == "emergency_contact_update":
+                await self._handle_emergency_contact_update(orchestration_id, amendment_data)
+            else:
+                logger.warning(f"⚠️ Unknown amendment type: {amendment_type}")
+            
+            # Store amendment
+            self.active_orchestrations[orchestration_id]["tasks"]["schedule_amendment"] = {
+                "agent": "voice_agent",
+                "amendment_type": amendment_type,
+                "amendment_data": amendment_data,
+                "timestamp": datetime.now().isoformat(),
+                "status": "processed"
+            }
+            
+            # Update knowledge base with new information
+            await self._update_context_from_amendment(patient_id, amendment_data)
+            
+            logger.info(f"✅ Schedule amendment processed for {patient_id}: {amendment_type}")
+            
+            return {
+                "status": "success",
+                "message": f"Schedule amendment processed: {amendment_type}",
+                "orchestration_id": orchestration_id,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to process schedule amendment for {patient_id}: {e}")
+            return {
+                "status": "error",
+                "message": "Failed to process schedule amendment",
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    async def _get_complete_patient_context(self, patient_id: str) -> Dict[str, Any]:
+        """Get complete patient context for Voice Agent"""
+        # Get from knowledge base (decrypted)
+        patient_context = self.knowledge_base.data_manager.get_patient_data(patient_id)
+        
+        # Get from active orchestration
+        orchestration_data = None
+        for orchestration_id, data in self.active_orchestrations.items():
+            if data.get("patient_id") == patient_id:
+                orchestration_data = data
+                break
+        
+        if orchestration_data:
+            # Merge orchestration data
+            patient_context.update({
+                "orchestration_id": orchestration_data.get("orchestration_id"),
+                "orchestration_status": orchestration_data.get("status"),
+                "tasks": orchestration_data.get("tasks", {}),
+                "flight_data": orchestration_data.get("flight_data", {}),
+                "created_at": orchestration_data.get("created_at"),
+                "updated_at": orchestration_data.get("updated_at")
+            })
+        
+        return patient_context
+    
+    async def _handle_flight_amendment(self, orchestration_id: str, amendment_data: Dict[str, Any]):
+        """Handle flight-related amendments"""
+        logger.info(f"✈️ Processing flight amendment for orchestration {orchestration_id}")
+        # Implementation for flight changes
+        
+    async def _handle_hotel_amendment(self, orchestration_id: str, amendment_data: Dict[str, Any]):
+        """Handle hotel-related amendments"""
+        logger.info(f"🏨 Processing hotel amendment for orchestration {orchestration_id}")
+        # Implementation for hotel changes
+        
+    async def _handle_hospital_amendment(self, orchestration_id: str, amendment_data: Dict[str, Any]):
+        """Handle hospital appointment amendments"""
+        logger.info(f"🏥 Processing hospital amendment for orchestration {orchestration_id}")
+        # Implementation for hospital appointment changes
+        
+    async def _handle_emergency_contact_update(self, orchestration_id: str, amendment_data: Dict[str, Any]):
+        """Handle emergency contact updates"""
+        logger.info(f"📞 Processing emergency contact update for orchestration {orchestration_id}")
+        # Implementation for emergency contact changes
+        
+    async def _update_context_from_amendment(self, patient_id: str, amendment_data: Dict[str, Any]):
+        """Update knowledge base context from schedule amendments"""
+        try:
+            # Get current context
+            current_context = self.knowledge_base.data_manager.get_patient_data(patient_id)
+            
+            # Update based on amendment type
+            amendment_type = amendment_data.get("amendment_type")
+            
+            if amendment_type == "flight_change" and amendment_data.get("new_flight_data"):
+                current_context["flight_data"] = amendment_data["new_flight_data"]
+            elif amendment_type == "hotel_change" and amendment_data.get("new_hotel_data"):
+                current_context.update(amendment_data["new_hotel_data"])
+            elif amendment_type == "hospital_appointment_change" and amendment_data.get("new_appointment_data"):
+                current_context.update(amendment_data["new_appointment_data"])
+            elif amendment_type == "emergency_contact_update" and amendment_data.get("new_contacts"):
+                current_context["emergency_contacts"] = amendment_data["new_contacts"]
+            
+            # Update knowledge base
+            await self.knowledge_base.update_patient_context(patient_id, current_context)
+            
+            logger.info(f"🧠 Updated knowledge base context from amendment: {amendment_type}")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to update context from amendment: {e}")
+    
+    async def handle_additional_info_request(self, patient_id: str, request_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle additional information requests from Voice Agent"""
+        try:
+            logger.info(f"📋 Processing additional info request from Voice Agent for {patient_id}")
+            
+            request_type = request_data.get("request_type")
+            requested_fields = request_data.get("requested_fields", [])
+            
+            # Get current patient context
+            patient_context = self.knowledge_base.data_manager.get_patient_data(patient_id)
+            
+            if not patient_context:
+                return {
+                    "status": "error",
+                    "message": f"No patient context found for {patient_id}",
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            # Prepare additional information based on request
+            additional_info = {}
+            
+            if request_type == "flight_status_update":
+                # Get latest flight information
+                additional_info["flight_status"] = {
+                    "current_status": patient_context.get("flight_data", {}).get("status"),
+                    "gate": patient_context.get("flight_data", {}).get("gate"),
+                    "terminal": patient_context.get("flight_data", {}).get("terminal"),
+                    "delay_minutes": patient_context.get("flight_data", {}).get("delay_minutes"),
+                    "last_updated": datetime.now().isoformat()
+                }
+            
+            elif request_type == "hotel_confirmation":
+                # Get hotel details
+                additional_info["hotel_details"] = {
+                    "hotel_name": "Denver Accessible Suites",
+                    "booking_reference": patient_context.get("hotel_booking_reference"),
+                    "check_in_time": "15:00",
+                    "room_type": "Accessible Suite",
+                    "confirmed": patient_context.get("hotel_status") == "confirmed"
+                }
+            
+            elif request_type == "hospital_appointment":
+                # Get hospital appointment details
+                additional_info["hospital_appointment"] = {
+                    "appointment_time": patient_context.get("hospital_appointment_time"),
+                    "hospital_name": "Denver Medical Center",
+                    "doctor_name": "Dr. Smith",
+                    "department": "Cardiology",
+                    "room_number": "Room 205"
+                }
+            
+            elif request_type == "emergency_contacts":
+                # Get emergency contact information
+                additional_info["emergency_contacts"] = {
+                    "family_contacts": patient_context.get("emergency_contacts", []),
+                    "medical_emergency": "911",
+                    "guardian_emergency": "+1-800-MED-HELP"
+                }
+            
+            elif request_type == "accessibility_needs":
+                # Get accessibility information
+                additional_info["accessibility_needs"] = {
+                    "special_requirements": patient_context.get("special_requirements", ""),
+                    "medical_conditions": patient_context.get("medical_conditions", []),
+                    "wheelchair_accessible": True,
+                    "mobility_assistance": True,
+                    "dietary_accommodations": True
+                }
+            
+            elif request_type == "medication_reminders":
+                # Get medication information
+                additional_info["medication_reminders"] = {
+                    "diabetes_medication": "Metformin - Take with meals",
+                    "blood_pressure_medication": "Lisinopril - Take daily",
+                    "reminder_times": ["08:00", "20:00"],
+                    "next_reminder": "2025-10-12T08:00:00"
+                }
+            
+            elif request_type == "return_flight":
+                # Get return flight information
+                additional_info["return_flight"] = {
+                    "flight_number": "WN124",
+                    "departure_time": "2025-10-15T16:00:00",
+                    "gate": "A15",
+                    "terminal": "1",
+                    "status": "Confirmed"
+                }
+            
+            else:
+                # Generic request - return requested fields
+                for field in requested_fields:
+                    if field in patient_context:
+                        additional_info[field] = patient_context[field]
+            
+            # Log the request
+            logger.info(f"✅ Additional info provided for {patient_id}: {request_type}")
+            
+            return {
+                "status": "success",
+                "message": f"Additional information provided for {request_type}",
+                "patient_id": patient_id,
+                "request_type": request_type,
+                "additional_info": additional_info,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to handle additional info request for {patient_id}: {e}")
+            return {
+                "status": "error",
+                "message": "Failed to retrieve additional information",
+                "timestamp": datetime.now().isoformat()
+            }
     
     async def cleanup_completed_orchestrations(self, max_age_hours: int = 24):
         """Clean up old completed orchestrations"""

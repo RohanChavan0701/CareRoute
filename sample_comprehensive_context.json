@@ -1,0 +1,317 @@
+{
+  "comprehensive_voice_agent_context": {
+    "description": "Complete context payload sent to Voice Agent when patient calls - covers all FAQ categories",
+    "hipaa_note": "Medical documents and records are NOT included to maintain HIPAA compliance. Voice Agent should direct patients to bring standard travel documents only.",
+    "call_context_payload": {
+      "patient_id": "P001",
+      "call_type": "patient_inquiry",
+      "call_initiated_by": "patient_app",
+      "call_timestamp": "2025-10-11T12:30:00Z",
+      
+      "pre_trip_info": {
+        "hospital_appointment": {
+          "appointment_id": "MED_APPT_001",
+          "appointment_time": "2025-10-12T14:00:00",
+          "hospital_name": "Denver Medical Center",
+          "doctor_name": "Dr. Smith",
+          "appointment_type": "consultation",
+          "confirmed": true,
+          "required_documents": ["ID", "Insurance Card", "Passport"],
+          "preparation_instructions": "Fast for 8 hours before appointment"
+        },
+        "travel_documents": {
+          "passport_required": true,
+          "visa_status": "Valid",
+          "medical_insurance": "Travel Medical Insurance Active",
+          "emergency_contacts_list": ["+1-555-111-2222", "+1-555-999-8888"]
+        }
+      },
+      
+      "travel_info": {
+        "flight_details": {
+          "flight_number": "WN123",
+          "airline": "Southwest Airlines",
+          "status": "BOARDING",
+          "gate": "B22",
+          "terminal": "3",
+          "departure_time": "2025-10-12T09:00:00",
+          "arrival_time": "2025-10-12T12:00:00",
+          "delay_minutes": null,
+          "origin_city": "Las Vegas",
+          "destination_city": "Denver"
+        },
+        "airport_pickup": {
+          "arranged": true,
+          "driver_name": "John Smith",
+          "driver_phone": "+1-555-DRIVER",
+          "vehicle_type": "Wheelchair Accessible Vehicle",
+          "meeting_location": "Baggage Claim Area",
+          "driver_instructions": "Will hold sign with patient name"
+        },
+        "return_flight": {
+          "flight_number": "WN124",
+          "departure_time": "2025-10-15T16:00:00",
+          "gate": "A15",
+          "terminal": "1"
+        }
+      },
+      
+      "hotel_info": {
+        "booking_details": {
+          "hotel_name": "Denver Accessible Suites",
+          "booking_reference": "HOTEL_REF_001",
+          "check_in_time": "15:00",
+          "check_out_time": "11:00",
+          "room_type": "Accessible Suite",
+          "confirmed": true
+        },
+        "hotel_services": {
+          "wheelchair_accessible": true,
+          "medical_equipment_storage": true,
+          "dietary_accommodations": true,
+          "concierge_services": true,
+          "translation_services": ["Spanish", "French", "German"]
+        },
+        "hotel_contact": {
+          "phone": "+1-303-HOTEL-01",
+          "address": "123 Medical Tourism Ave, Denver, CO",
+          "concierge_email": "concierge@denveraccessible.com"
+        }
+      },
+      
+      "hospital_info": {
+        "appointment_details": {
+          "hospital_name": "Denver Medical Center",
+          "appointment_time": "2025-10-12T14:00:00",
+          "procedure_type": "Medical Consultation",
+          "doctor_name": "Dr. Smith",
+          "department": "Cardiology",
+          "room_number": "Room 205"
+        },
+        "hospital_services": {
+          "family_notification": true,
+          "patient_portal_access": true,
+          "emergency_protocols": "24/7 Emergency Contact Available"
+        },
+        "family_communication": {
+          "auto_notifications": true,
+          "emergency_contacts": ["+1-555-111-2222", "+1-555-999-8888"],
+          "status_updates": "Real-time via SMS and Email"
+        }
+      },
+      
+      "recovery_info": {
+        "follow_up_schedule": {
+          "next_appointment": "2025-10-14T10:00:00",
+          "appointment_type": "Follow-up Consultation",
+          "doctor": "Dr. Smith"
+        },
+        "medication_reminders": {
+          "diabetes_medication": "Metformin - Take with meals",
+          "blood_pressure_medication": "Lisinopril - Take daily",
+          "reminder_times": ["08:00", "20:00"]
+        },
+        "emergency_contacts": {
+          "medical_emergency": "911",
+          "guardian_emergency": "+1-800-MED-HELP",
+          "family_contacts": ["+1-555-111-2222", "+1-555-999-8888"]
+        }
+      },
+      
+      "return_travel_info": {
+        "return_flight": {
+          "flight_number": "WN124",
+          "departure_time": "2025-10-15T16:00:00",
+          "gate": "A15",
+          "terminal": "1",
+          "status": "Confirmed"
+        },
+        "airport_assistance": {
+          "wheelchair_service": true,
+          "priority_boarding": true,
+          "medical_equipment_transport": true
+        },
+        "transportation_arrangements": {
+          "hotel_to_airport": "Scheduled pickup at 14:00",
+          "driver_contact": "+1-555-DRIVER",
+          "vehicle_type": "Wheelchair Accessible"
+        }
+      },
+      
+      "family_info": {
+        "patient_status": {
+          "current_location": "Denver, Colorado",
+          "health_status": "Stable",
+          "last_update": "2025-10-11T12:30:00Z"
+        },
+        "family_communication": {
+          "emergency_contacts": ["+1-555-111-2222", "+1-555-999-8888"],
+          "auto_notifications": true,
+          "status_updates_enabled": true
+        },
+        "companion_services": {
+          "family_accommodation": "Nearby hotel arranged",
+          "visiting_hours": "09:00-21:00",
+          "family_support_contact": "+1-800-FAMILY"
+        }
+      },
+      
+      "support_info": {
+        "language_preferences": {
+          "primary": "English",
+          "available_languages": ["English", "Spanish", "French", "German"]
+        },
+        "accessibility_support": {
+          "wheelchair_accessible": true,
+          "mobility_assistance": true,
+          "dietary_accommodations": true,
+          "medical_equipment_support": true
+        },
+        "emergency_protocols": {
+          "medical_emergency": "Call 911 immediately",
+          "travel_emergency": "+1-800-TRAVEL-HELP",
+          "guardian_support": "+1-800-GUARDIAN"
+        }
+      }
+    }
+  },
+  "additional_info_requests": {
+    "description": "Voice Agent can request specific additional information if needed",
+    "request_types": [
+      {
+        "request_type": "flight_status_update",
+        "description": "Get latest flight status information",
+        "jsonrpc_request": {
+          "jsonrpc": "2.0",
+          "id": "info_001",
+          "method": "RequestAdditionalInfo",
+          "params": {
+            "patient_id": "P001",
+            "request_type": "flight_status_update"
+          }
+        },
+        "response": {
+          "status": "success",
+          "additional_info": {
+            "flight_status": {
+              "current_status": "BOARDING",
+              "gate": "B22",
+              "terminal": "3",
+              "delay_minutes": null,
+              "last_updated": "2025-10-11T12:30:00Z"
+            }
+          }
+        }
+      },
+      {
+        "request_type": "hotel_confirmation",
+        "description": "Get hotel confirmation details",
+        "jsonrpc_request": {
+          "jsonrpc": "2.0",
+          "id": "info_002",
+          "method": "RequestAdditionalInfo",
+          "params": {
+            "patient_id": "P001",
+            "request_type": "hotel_confirmation"
+          }
+        }
+      },
+      {
+        "request_type": "hospital_appointment",
+        "description": "Get hospital appointment details",
+        "jsonrpc_request": {
+          "jsonrpc": "2.0",
+          "id": "info_003",
+          "method": "RequestAdditionalInfo",
+          "params": {
+            "patient_id": "P001",
+            "request_type": "hospital_appointment"
+          }
+        }
+      },
+      {
+        "request_type": "emergency_contacts",
+        "description": "Get emergency contact information",
+        "jsonrpc_request": {
+          "jsonrpc": "2.0",
+          "id": "info_004",
+          "method": "RequestAdditionalInfo",
+          "params": {
+            "patient_id": "P001",
+            "request_type": "emergency_contacts"
+          }
+        }
+      },
+      {
+        "request_type": "accessibility_needs",
+        "description": "Get accessibility needs information",
+        "jsonrpc_request": {
+          "jsonrpc": "2.0",
+          "id": "info_005",
+          "method": "RequestAdditionalInfo",
+          "params": {
+            "patient_id": "P001",
+            "request_type": "accessibility_needs"
+          }
+        }
+      },
+      {
+        "request_type": "medication_reminders",
+        "description": "Get medication reminder information",
+        "jsonrpc_request": {
+          "jsonrpc": "2.0",
+          "id": "info_006",
+          "method": "RequestAdditionalInfo",
+          "params": {
+            "patient_id": "P001",
+            "request_type": "medication_reminders"
+          }
+        }
+      },
+      {
+        "request_type": "return_flight",
+        "description": "Get return flight information",
+        "jsonrpc_request": {
+          "jsonrpc": "2.0",
+          "id": "info_007",
+          "method": "RequestAdditionalInfo",
+          "params": {
+            "patient_id": "P001",
+            "request_type": "return_flight"
+          }
+        }
+      }
+    ]
+  },
+  "faq_coverage": {
+    "description": "All patient journey FAQ categories are covered in the comprehensive context",
+    "pre_trip_planning": [
+      "Has my hospital appointment been confirmed?",
+      "What documents do I need to bring?"
+    ],
+    "travel_transit": [
+      "What's my flight status or gate number?",
+      "Who will pick me up at the airport?"
+    ],
+    "arrival_hotel": [
+      "Can you confirm my hotel check-in and driver details?",
+      "Can you translate something for me at the reception?"
+    ],
+    "hospital_treatment": [
+      "What time is my surgery or consultation?",
+      "Can you notify my family when I'm checked in?"
+    ],
+    "recovery_followup": [
+      "When is my next follow-up or medicine reminder?",
+      "I'm not feeling well — who can I contact?"
+    ],
+    "return_travel": [
+      "When is my flight back home?",
+      "Can you arrange airport assistance or a cab?"
+    ],
+    "family_companion": [
+      "Has the patient arrived or checked in safely?",
+      "When is the patient's surgery or discharge?"
+    ]
+  }
+}

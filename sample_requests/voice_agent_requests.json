@@ -1,0 +1,226 @@
+{
+  "voice_agent_requests": {
+    "description": "Sample A2A JSON-RPC 2.0 requests that Guardian Orchestrator will send to Voice Agent",
+    "base_url": "https://voice-agent.aws.region.elb.amazonaws.com",
+    "endpoint": "/a2a/tasks",
+    "requests": {
+      "InitiateCall": {
+        "description": "Standard coordination update call to patient",
+        "request": {
+          "jsonrpc": "2.0",
+          "id": "guardian_voice_001_20251011_102732",
+          "method": "InitiateCall",
+          "params": {
+            "patient_id": "P001",
+            "call_type": "coordination_update",
+            "call_purpose": "Medical tourism coordination update",
+            "message": "Flight AA1234 ETA confirmed. Hotel and Hospital coordination in progress.",
+            "patient_phone": "+1-555-111-2222",
+            "orchestration_id": "ORCH_P001_20251011_102732",
+            "call_priority": "normal",
+            "preferred_language": "English",
+            "accessibility_requirements": {
+              "hearing_assistance": false,
+              "speech_rate": "normal",
+              "volume_level": "optimal"
+            },
+            "context": {
+              "flight_number": "AA1234",
+              "arrival_time": "2024-02-15T14:30:00Z",
+              "hotel_status": "confirmed",
+              "hospital_status": "confirmed"
+            }
+          }
+        }
+      },
+      "EmergencyCall": {
+        "description": "Emergency call for urgent medical situations",
+        "request": {
+          "jsonrpc": "2.0",
+          "id": "guardian_voice_002_20251011_102800",
+          "method": "EmergencyCall",
+          "params": {
+            "patient_id": "P001",
+            "emergency_type": "medical_assistance_required",
+            "priority": "high",
+            "patient_phone": "+1-555-111-2222",
+            "emergency_contacts": ["+1-555-999-8888", "+1-555-777-6666"],
+            "emergency_details": {
+              "condition": "severe_pain",
+              "location": "airport_terminal",
+              "medical_equipment_needed": ["wheelchair", "oxygen"],
+              "hospital_preference": "nearest_emergency_room"
+            },
+            "orchestration_id": "ORCH_P001_20251011_102732",
+            "escalation_required": true,
+            "call_duration_limit": 300,
+            "context": {
+              "flight_number": "AA1234",
+              "current_location": "LAX_Terminal_1",
+              "medical_conditions": ["Diabetes", "Hypertension"]
+            }
+          }
+        }
+      },
+      "FollowUpCall": {
+        "description": "Post-treatment follow-up call",
+        "request": {
+          "jsonrpc": "2.0",
+          "id": "guardian_voice_003_20251011_102815",
+          "method": "FollowUpCall",
+          "params": {
+            "patient_id": "P001",
+            "follow_up_reason": "post_treatment_check",
+            "patient_phone": "+1-555-111-2222",
+            "treatment_date": "2024-02-16T09:00:00Z",
+            "treatment_type": "cardiac_procedure",
+            "doctor_name": "Dr. Smith",
+            "hospital_name": "LA Medical Center",
+            "orchestration_id": "ORCH_P001_20251011_102732",
+            "questions_to_ask": [
+              "How are you feeling after the procedure?",
+              "Are you experiencing any pain or discomfort?",
+              "Have you taken your prescribed medications?",
+              "Do you have any questions about your recovery?"
+            ],
+            "context": {
+              "procedure_type": "angioplasty",
+              "discharge_date": "2024-02-17T14:00:00Z",
+              "next_appointment": "2024-02-24T10:00:00Z"
+            }
+          }
+        }
+      },
+      "LanguageSupportCall": {
+        "description": "Call with language interpreter support",
+        "request": {
+          "jsonrpc": "2.0",
+          "id": "guardian_voice_004_20251011_102830",
+          "method": "LanguageSupportCall",
+          "params": {
+            "patient_id": "P002",
+            "patient_phone": "+1-555-333-4444",
+            "requested_language": "Spanish",
+            "call_type": "coordination_update",
+            "interpreter_required": true,
+            "interpreter_specialization": "medical_terminology",
+            "cultural_considerations": "Hispanic_healthcare_practices",
+            "message": "Su vuelo UA5678 ha sido confirmado. Sus arreglos de hotel y hospital están en progreso.",
+            "orchestration_id": "ORCH_P002_20251011_102730",
+            "accessibility_requirements": {
+              "language": "Spanish",
+              "speech_rate": "slow",
+              "cultural_sensitivity": "high"
+            },
+            "context": {
+              "flight_number": "UA5678",
+              "arrival_time": "2024-02-20T10:15:00Z",
+              "destination": "Miami",
+              "medical_conditions": ["Heart condition", "Diabetes"]
+            }
+          }
+        }
+      },
+      "AccessibilityCall": {
+        "description": "Call with accessibility features for disabled patients",
+        "request": {
+          "jsonrpc": "2.0",
+          "id": "guardian_voice_005_20251011_102845",
+          "method": "AccessibilityCall",
+          "params": {
+            "patient_id": "P003",
+            "patient_phone": "+1-555-555-6666",
+            "call_type": "accessibility_assistance",
+            "accessibility_requirements": {
+              "hearing_assistance": true,
+              "visual_impairment": false,
+              "speech_rate": "slow",
+              "volume_level": "high",
+              "clear_pronunciation": true,
+              "repeat_instructions": true
+            },
+            "mobility_needs": ["wheelchair_assistance", "elevator_access"],
+            "medical_equipment": ["glucose_monitor", "oxygen_concentrator"],
+            "orchestration_id": "ORCH_P003_20251011_102740",
+            "message": "Flight DL9012 coordination update. Accessibility services have been arranged for your arrival.",
+            "context": {
+              "flight_number": "DL9012",
+              "arrival_time": "2024-02-25T16:30:00Z",
+              "accessibility_services": ["wheelchair_ramp", "accessible_transport", "medical_equipment_delivery"]
+            }
+          }
+        }
+      },
+      "FamilyNotificationCall": {
+        "description": "Call to notify family members about patient status",
+        "request": {
+          "jsonrpc": "2.0",
+          "id": "guardian_voice_006_20251011_102900",
+          "method": "FamilyNotificationCall",
+          "params": {
+            "patient_id": "P001",
+            "family_phone": "+1-555-999-8888",
+            "call_type": "family_notification",
+            "notification_type": "status_update",
+            "patient_name": "John Doe",
+            "message": "Your family member John Doe's medical tourism coordination is proceeding as planned. Flight AA1234 is on time and all arrangements are confirmed.",
+            "orchestration_id": "ORCH_P001_20251011_102732",
+            "privacy_level": "family_authorized",
+            "medical_details_included": false,
+            "context": {
+              "flight_number": "AA1234",
+              "arrival_time": "2024-02-15T14:30:00Z",
+              "hotel": "LA Medical Hotel",
+              "hospital": "LA Medical Center",
+              "treatment_date": "2024-02-16T09:00:00Z"
+            }
+          }
+        }
+      }
+    },
+    "expected_response_format": {
+      "success_response": {
+        "jsonrpc": "2.0",
+        "id": "guardian_voice_001_20251011_102732",
+        "result": {
+          "status": "success",
+          "call_id": "CALL_12345_ABC",
+          "agent": "voice_agent",
+          "task": "InitiateCall",
+          "call_details": {
+            "patient_id": "P001",
+            "call_status": "completed",
+            "call_duration": "00:03:45",
+            "call_quality": "excellent"
+          },
+          "timestamp": "2024-02-15T14:33:45Z"
+        }
+      },
+      "error_response": {
+        "jsonrpc": "2.0",
+        "id": "guardian_voice_001_20251011_102732",
+        "error": {
+          "code": -32000,
+          "message": "Call initiation failed",
+          "data": {
+            "error_type": "PHONE_NUMBER_INVALID",
+            "details": "Patient phone number is not reachable",
+            "retry_available": true
+          }
+        }
+      }
+    },
+    "implementation_notes": {
+      "authentication": "Use A2A API tokens for authentication",
+      "rate_limiting": "Handle rate limiting with exponential backoff",
+      "retry_logic": "Implement retry for failed calls with max 3 attempts",
+      "logging": "Log all call attempts and results for audit purposes",
+      "twilio_integration": "Use Twilio for actual voice calls",
+      "transcription": "Enable call transcription for quality assurance",
+      "recording": "Record calls for medical compliance (with consent)",
+      "accessibility": "Support TTS and accessibility features as specified",
+      "language_support": "Integrate with professional interpreter services",
+      "emergency_escalation": "Implement emergency call escalation procedures"
+    }
+  }
+}

@@ -24,8 +24,10 @@ async def test_multiple_orchestrations():
             "hospital_appointment_id": "MED_APPT_001",
             "hospital_appointment_time": "2024-02-16T09:00:00",
             "emergency_contacts": ["+1-555-0001"],
-            "special_requirements": "Wheelchair accessible",
-            "medical_conditions": ["Diabetes", "Hypertension"]
+            "special_requirements": "Wheelchair accessible, Dietary restrictions",
+            "medical_conditions": ["Diabetes", "Hypertension", "Arthritis"],
+            "age": 72,
+            "preferred_language": "English"
         },
         {
             "patient_id": "P002",
@@ -39,8 +41,10 @@ async def test_multiple_orchestrations():
             "hospital_appointment_id": "MED_APPT_002",
             "hospital_appointment_time": "2024-02-21T14:00:00",
             "emergency_contacts": ["+1-555-0002", "+1-555-0003"],
-            "special_requirements": "Dietary restrictions",
-            "medical_conditions": ["Heart condition"]
+            "special_requirements": "Dietary restrictions, Visual impairment",
+            "medical_conditions": ["Heart condition", "Diabetes"],
+            "age": 68,
+            "preferred_language": "Spanish"
         },
         {
             "patient_id": "P003",

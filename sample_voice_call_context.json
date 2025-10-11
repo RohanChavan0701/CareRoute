@@ -1,0 +1,211 @@
+{
+  "voice_agent_call_context": {
+    "description": "Complete patient context sent to Voice Agent when patient calls",
+    "incoming_call_request": {
+      "jsonrpc": "2.0",
+      "id": "call_001",
+      "method": "ReceiveCallContext",
+      "params": {
+        "patient_id": "P001",
+        "call_type": "patient_inquiry",
+        "call_initiated_by": "patient_app",
+        "call_timestamp": "2025-10-11T12:30:00Z",
+        "patient_context": {
+          "patient_id": "P001",
+          "patient_name": "John Doe",
+          "patient_email": "john.doe@example.com",
+          "flight_data": {
+            "flight_number": "WN123",
+            "status": "BOARDING",
+            "gate": "B22",
+            "terminal": "3",
+            "estimated_arrival_local": "2025-10-12T12:00:00",
+            "delay_minutes": null,
+            "destination_city": "Denver",
+            "origin_city": "Las Vegas"
+          },
+          "hotel_booking_reference": "HOTEL_REF_001",
+          "hospital_appointment_id": "MED_APPT_001",
+          "hospital_appointment_time": "2025-10-12T14:00:00",
+          "emergency_contacts": ["+1-555-111-2222", "+1-555-999-8888"],
+          "special_requirements": "Wheelchair accessible, Dietary restrictions",
+          "medical_conditions": ["Diabetes", "Hypertension"],
+          "age": 72,
+          "preferred_language": "English",
+          "hotel_status": "confirmed",
+          "hospital_status": "confirmed",
+          "orchestration_id": "ORCH_P001_20251011_121905",
+          "orchestration_status": "completed",
+          "tasks": {
+            "accessibility_assessment": {
+              "agent": "accessibility_agent",
+              "task": "AssessAccessibilityNeeds",
+              "result": {
+                "status": "success",
+                "accessibility_needs": {
+                  "mobility_assistance": ["wheelchair_ramp", "priority_boarding"],
+                  "medical_equipment": ["insulin_storage"],
+                  "accessible_accommodations": true
+                }
+              }
+            },
+            "flight_monitoring": {
+              "agent": "flight_agent",
+              "task": "TrackFlight",
+              "result": {
+                "status": "success",
+                "flight_data": "BOARDING"
+              }
+            }
+          }
+        },
+        "conversation_guidelines": {
+          "patient_name": "John Doe",
+          "preferred_language": "English",
+          "medical_conditions": ["Diabetes", "Hypertension"],
+          "accessibility_needs": "Wheelchair accessible, Dietary restrictions",
+          "emergency_contacts": ["+1-555-111-2222", "+1-555-999-8888"],
+          "conversation_tips": [
+            "Use patient's first name for personal touch",
+            "Be aware of diabetes management needs",
+            "Consider wheelchair accessibility requirements",
+            "Keep language simple and clear",
+            "Be empathetic about travel stress"
+          ]
+        },
+        "current_status": {
+          "orchestration_status": "completed",
+          "flight_status": "BOARDING",
+          "hotel_status": "confirmed",
+          "hospital_status": "confirmed",
+          "accessibility_services": "arranged"
+        },
+        "knowledge_base_access": {
+          "enabled": true,
+          "endpoint": "orchestrator_knowledge_base",
+          "usage": "Voice Agent can query for real-time information",
+          "example_queries": [
+            "What's the current flight status?",
+            "Is my hotel room accessible?",
+            "When is my hospital appointment?",
+            "Who are my emergency contacts?"
+          ]
+        }
+      }
+    },
+    "expected_response": {
+      "jsonrpc": "2.0",
+      "id": "call_001",
+      "result": {
+        "status": "success",
+        "message": "Call context received successfully",
+        "call_context_id": "CALL_CTX_001",
+        "voice_agent_ready": true,
+        "conversation_started": true,
+        "estimated_call_duration": "5-10 minutes"
+      }
+    }
+  },
+  "schedule_amendment_requests": {
+    "description": "Schedule amendments that Voice Agent can send back to orchestrator",
+    "flight_change_amendment": {
+      "jsonrpc": "2.0",
+      "id": "amend_001",
+      "method": "SubmitScheduleAmendment",
+      "params": {
+        "patient_id": "P001",
+        "amendment_type": "flight_change",
+        "reason": "flight_delay",
+        "amendment_data": {
+          "amendment_type": "flight_change",
+          "reason": "flight_delay",
+          "new_flight_data": {
+            "flight_number": "WN123",
+            "status": "DELAYED",
+            "delay_minutes": 120,
+            "estimated_arrival_local": "2025-10-12T14:00:00"
+          },
+          "additional_requests": ["hotel_checkout_extension"],
+          "impact_assessment": "Hospital appointment may need rescheduling"
+        }
+      }
+    },
+    "hotel_change_amendment": {
+      "jsonrpc": "2.0",
+      "id": "amend_002",
+      "method": "SubmitScheduleAmendment",
+      "params": {
+        "patient_id": "P001",
+        "amendment_type": "hotel_change",
+        "reason": "accessibility_upgrade",
+        "amendment_data": {
+          "amendment_type": "hotel_change",
+          "reason": "accessibility_upgrade",
+          "new_hotel_data": {
+            "hotel_booking_reference": "HOTEL_REF_001_UPDATED",
+            "room_type": "accessible_suite",
+            "special_amenities": ["wheelchair_accessible", "medical_equipment_storage"],
+            "upgrade_cost": "$50/night"
+          }
+        }
+      }
+    },
+    "hospital_appointment_change": {
+      "jsonrpc": "2.0",
+      "id": "amend_003",
+      "method": "SubmitScheduleAmendment",
+      "params": {
+        "patient_id": "P001",
+        "amendment_type": "hospital_appointment_change",
+        "reason": "flight_delay_conflict",
+        "amendment_data": {
+          "amendment_type": "hospital_appointment_change",
+          "reason": "flight_delay_conflict",
+          "new_appointment_data": {
+            "hospital_appointment_id": "MED_APPT_001_RESCHEDULED",
+            "hospital_appointment_time": "2025-10-12T16:00:00",
+            "appointment_type": "consultation",
+            "doctor_name": "Dr. Smith",
+            "rescheduling_fee": "$25"
+          }
+        }
+      }
+    },
+    "emergency_contact_update": {
+      "jsonrpc": "2.0",
+      "id": "amend_004",
+      "method": "SubmitScheduleAmendment",
+      "params": {
+        "patient_id": "P001",
+        "amendment_type": "emergency_contact_update",
+        "reason": "contact_info_update",
+        "amendment_data": {
+          "amendment_type": "emergency_contact_update",
+          "reason": "contact_info_update",
+          "new_contacts": ["+1-555-111-2222", "+1-555-999-8888", "+1-555-NEW-CONTACT"],
+          "contact_notes": "Added daughter's number for emergency"
+        }
+      }
+    }
+  },
+  "implementation_notes": {
+    "call_context_sharing": {
+      "trigger": "Patient calls Voice Agent from mobile app",
+      "context_completeness": "Full patient context including medical, travel, and accessibility info",
+      "real_time_data": "Current flight status, hotel confirmation, appointment times",
+      "conversation_guidance": "Medical conditions, accessibility needs, preferred language"
+    },
+    "schedule_amendments": {
+      "bidirectional_flow": "Voice Agent can send amendments back to orchestrator",
+      "amendment_types": ["flight_change", "hotel_change", "hospital_appointment_change", "emergency_contact_update"],
+      "processing": "Orchestrator processes amendments and updates all relevant systems",
+      "knowledge_base_update": "Context automatically updated with new information"
+    },
+    "hipaa_compliance": {
+      "data_encryption": "All patient data encrypted at rest",
+      "secure_transmission": "HTTPS for all A2A communications",
+      "audit_logging": "Complete audit trail of all context sharing and amendments",
+      "access_control": "Only authorized agents can access patient context"
+    }
+  }
+}

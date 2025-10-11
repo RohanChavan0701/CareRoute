@@ -1,0 +1,158 @@
+{
+  "notification_agent_requests_with_email": {
+    "description": "Updated Guardian Orchestrator requests to Notification Agent with email integration",
+    "requests": [
+      {
+        "method": "SendFamilyUpdate",
+        "description": "Send family notification with patient email included",
+        "jsonrpc_request": {
+          "jsonrpc": "2.0",
+          "id": "req_001",
+          "method": "SendFamilyUpdate",
+          "params": {
+            "patient_id": "P001",
+            "patient_email": "john.doe@example.com",
+            "flight_number": "WN123",
+            "family_contacts": ["+1-555-111-2222", "+1-555-999-8888"],
+            "message_type": "coordination_started",
+            "status": "Guardian coordination activated",
+            "orchestration_id": "ORCH_P001_20251011_121905"
+          }
+        },
+        "expected_response": {
+          "jsonrpc": "2.0",
+          "id": "req_001",
+          "result": {
+            "status": "success",
+            "message": "Family notification sent successfully",
+            "notification_id": "NOTIF_001",
+            "sent_to": ["john.doe@example.com", "+1-555-111-2222", "+1-555-999-8888"],
+            "delivery_status": {
+              "email": "delivered",
+              "sms": "sent",
+              "push": "sent"
+            }
+          }
+        }
+      },
+      {
+        "method": "SendStatusUpdate",
+        "description": "Send status update with patient email",
+        "jsonrpc_request": {
+          "jsonrpc": "2.0",
+          "id": "req_002",
+          "method": "SendStatusUpdate",
+          "params": {
+            "patient_id": "P001",
+            "patient_email": "john.doe@example.com",
+            "message_type": "flight_status_update",
+            "content": "Your flight WN123 is now boarding at Gate B22",
+            "priority": "normal",
+            "channels": ["email", "sms", "push"]
+          }
+        },
+        "expected_response": {
+          "jsonrpc": "2.0",
+          "id": "req_002",
+          "result": {
+            "status": "success",
+            "message": "Status update sent successfully",
+            "notification_id": "NOTIF_002",
+            "sent_to": ["john.doe@example.com"],
+            "delivery_status": {
+              "email": "delivered"
+            }
+          }
+        }
+      },
+      {
+        "method": "SendEmergencyAlert",
+        "description": "Send emergency alert with patient email",
+        "jsonrpc_request": {
+          "jsonrpc": "2.0",
+          "id": "req_003",
+          "method": "SendEmergencyAlert",
+          "params": {
+            "patient_id": "P001",
+            "patient_email": "john.doe@example.com",
+            "emergency_contacts": ["+1-555-111-2222", "+1-555-999-8888"],
+            "alert_type": "medical_emergency",
+            "message": "Patient requires immediate medical attention",
+            "location": "Denver International Airport",
+            "priority": "high",
+            "channels": ["email", "sms", "phone", "push"]
+          }
+        },
+        "expected_response": {
+          "jsonrpc": "2.0",
+          "id": "req_003",
+          "result": {
+            "status": "success",
+            "message": "Emergency alert sent successfully",
+            "alert_id": "EMERGENCY_001",
+            "sent_to": ["john.doe@example.com", "+1-555-111-2222", "+1-555-999-8888"],
+            "delivery_status": {
+              "email": "delivered",
+              "sms": "sent",
+              "phone": "connected",
+              "push": "sent"
+            }
+          }
+        }
+      },
+      {
+        "method": "SendAppointmentReminder",
+        "description": "Send appointment reminder with patient email",
+        "jsonrpc_request": {
+          "jsonrpc": "2.0",
+          "id": "req_004",
+          "method": "SendAppointmentReminder",
+          "params": {
+            "patient_id": "P001",
+            "patient_email": "john.doe@example.com",
+            "appointment_id": "MED_APPT_001",
+            "appointment_time": "2025-10-12T09:00:00",
+            "hospital_name": "Denver Medical Center",
+            "reminder_type": "24_hour",
+            "message": "Reminder: Your medical appointment is tomorrow at 9:00 AM",
+            "channels": ["email", "sms"]
+          }
+        },
+        "expected_response": {
+          "jsonrpc": "2.0",
+          "id": "req_004",
+          "result": {
+            "status": "success",
+            "message": "Appointment reminder sent successfully",
+            "notification_id": "NOTIF_003",
+            "sent_to": ["john.doe@example.com"],
+            "delivery_status": {
+              "email": "delivered",
+              "sms": "sent"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "implementation_notes": {
+    "email_integration": {
+      "description": "The Notification Agent now receives patient_email in all requests",
+      "email_field": "patient_email",
+      "required": false,
+      "fallback": "If email not provided, notifications sent only via SMS/phone",
+      "format": "Valid email address (RFC 5322 compliant)"
+    },
+    "json_rpc_format": {
+      "version": "2.0",
+      "method_naming": "PascalCase",
+      "params_structure": "Object with named parameters",
+      "response_structure": "Standard JSON-RPC 2.0 response"
+    },
+    "hipaa_compliance": {
+      "email_encryption": "Email addresses encrypted at rest in orchestrator",
+      "transmission": "HTTPS only for email data transmission",
+      "audit_logging": "All email notifications logged for compliance"
+    }
+  }
+}

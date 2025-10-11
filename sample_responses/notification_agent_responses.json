@@ -1,0 +1,344 @@
+{
+  "notification_agent_responses": {
+    "SendFamilyUpdate": {
+      "success_response": {
+        "jsonrpc": "2.0",
+        "id": "guardian_notify_001_20251011_102732",
+        "result": {
+          "status": "success",
+          "notification_id": "NOTIF_12345_ABC",
+          "agent": "notification_agent",
+          "task": "SendFamilyUpdate",
+          "delivery_details": {
+            "patient_id": "P001",
+            "notification_type": "status_update",
+            "delivery_status": "delivered",
+            "recipients_notified": 2,
+            "delivery_methods": ["sms", "email"],
+            "delivery_timestamp": "2024-02-15T14:35:00Z",
+            "delivery_confirmations": [
+              {
+                "recipient": "+1-555-999-8888",
+                "method": "sms",
+                "status": "delivered",
+                "timestamp": "2024-02-15T14:35:02Z",
+                "provider_response": "sent"
+              },
+              {
+                "recipient": "family@example.com",
+                "method": "email",
+                "status": "delivered",
+                "timestamp": "2024-02-15T14:35:05Z",
+                "provider_response": "accepted"
+              }
+            ]
+          },
+          "message_content": {
+            "sms": "Update: John's flight AA1234 is on time. Hotel and hospital arrangements confirmed. Expected arrival: 2:30 PM PST.",
+            "email": "Medical Tourism Update for John Doe - Flight Status: On Time, Hotel: Confirmed, Hospital: Confirmed, ETA: 2:30 PM PST"
+          },
+          "context": {
+            "flight_number": "AA1234",
+            "arrival_time": "2024-02-15T14:30:00Z",
+            "hotel_status": "confirmed",
+            "hospital_status": "confirmed"
+          },
+          "timestamp": "2024-02-15T14:35:05Z",
+          "processing_time_ms": 320
+        }
+      },
+      "error_response": {
+        "jsonrpc": "2.0",
+        "id": "guardian_notify_001_20251011_102732",
+        "error": {
+          "code": -32000,
+          "message": "Notification delivery failed",
+          "data": {
+            "error_type": "RECIPIENT_UNAVAILABLE",
+            "details": "Primary recipient phone number +1-555-999-8888 is not reachable",
+            "retry_available": true,
+            "alternative_methods": ["email", "push_notification"],
+            "failed_deliveries": [
+              {
+                "recipient": "+1-555-999-8888",
+                "method": "sms",
+                "error": "phone_number_invalid"
+              }
+            ],
+            "successful_deliveries": [
+              {
+                "recipient": "family@example.com",
+                "method": "email",
+                "status": "delivered"
+              }
+            ],
+            "timestamp": "2024-02-15T14:35:00Z"
+          }
+        }
+      }
+    },
+    "SendEmergencyAlert": {
+      "success_response": {
+        "jsonrpc": "2.0",
+        "id": "guardian_notify_002_20251011_102800",
+        "result": {
+          "status": "success",
+          "notification_id": "EMERGENCY_NOTIF_67890_DEF",
+          "agent": "notification_agent",
+          "task": "SendEmergencyAlert",
+          "emergency_details": {
+            "patient_id": "P001",
+            "emergency_type": "medical_assistance_required",
+            "priority": "high",
+            "escalation_level": "immediate",
+            "delivery_status": "delivered",
+            "emergency_response_time": "00:01:23",
+            "recipients_notified": 3,
+            "delivery_methods": ["call", "sms", "email"],
+            "medical_team_alerted": true,
+            "ambulance_dispatched": false
+          },
+          "delivery_confirmations": [
+            {
+              "recipient": "+1-555-999-8888",
+              "method": "call",
+              "status": "completed",
+              "duration": "00:02:15",
+              "timestamp": "2024-02-15T15:47:00Z"
+            },
+            {
+              "recipient": "+1-555-777-6666",
+              "method": "sms",
+              "status": "delivered",
+              "timestamp": "2024-02-15T15:46:30Z"
+            },
+            {
+              "recipient": "emergency@hospital.com",
+              "method": "email",
+              "status": "delivered",
+              "timestamp": "2024-02-15T15:46:45Z"
+            }
+          ],
+          "emergency_message": {
+            "sms": "URGENT: John requires immediate medical attention at LAX Terminal 1. Medical team has been notified.",
+            "call": "This is an emergency notification regarding John Doe. He requires immediate medical attention at LAX Terminal 1. Please contact the medical team immediately.",
+            "email": "EMERGENCY ALERT - John Doe requires immediate medical attention at LAX Terminal 1. Medical team has been notified and is responding."
+          },
+          "follow_up_actions": [
+            "monitor_emergency_response",
+            "coordinate_with_medical_team",
+            "update_family_status"
+          ],
+          "timestamp": "2024-02-15T15:47:00Z",
+          "processing_time_ms": 180
+        }
+      }
+    },
+    "SendTreatmentReminder": {
+      "success_response": {
+        "jsonrpc": "2.0",
+        "id": "guardian_notify_003_20251011_102815",
+        "result": {
+          "status": "success",
+          "notification_id": "REMINDER_NOTIF_11111_GHI",
+          "agent": "notification_agent",
+          "task": "SendTreatmentReminder",
+          "reminder_details": {
+            "patient_id": "P001",
+            "reminder_type": "appointment_reminder",
+            "delivery_status": "delivered",
+            "reminder_timing": "24_hours_before",
+            "appointment_details": {
+              "doctor_name": "Dr. Smith",
+              "hospital_name": "LA Medical Center",
+              "appointment_time": "2024-02-16T09:00:00Z",
+              "procedure_type": "cardiac_procedure"
+            },
+            "delivery_confirmations": [
+              {
+                "recipient": "+1-555-111-2222",
+                "method": "sms",
+                "status": "delivered",
+                "timestamp": "2024-02-15T09:00:00Z",
+                "read_receipt": true
+              },
+              {
+                "recipient": "+1-555-111-2222",
+                "method": "push",
+                "status": "delivered",
+                "timestamp": "2024-02-15T09:00:05Z",
+                "device_acknowledged": true
+              }
+            ]
+          },
+          "reminder_message": {
+            "sms": "Reminder: Your appointment with Dr. Smith is tomorrow at 9:00 AM. Please arrive 30 minutes early. Fast for 8 hours before appointment.",
+            "push": "Medical Appointment Reminder - Dr. Smith, LA Medical Center, Tomorrow 9:00 AM"
+          },
+          "preparation_instructions": [
+            "Fast for 8 hours before appointment",
+            "Take morning medications as usual",
+            "Bring insurance card and ID"
+          ],
+          "timestamp": "2024-02-15T09:00:05Z",
+          "processing_time_ms": 250
+        }
+      }
+    },
+    "SendAccessibilityUpdate": {
+      "success_response": {
+        "jsonrpc": "2.0",
+        "id": "guardian_notify_004_20251011_102830",
+        "result": {
+          "status": "success",
+          "notification_id": "ACCESS_NOTIF_22222_JKL",
+          "agent": "notification_agent",
+          "task": "SendAccessibilityUpdate",
+          "accessibility_details": {
+            "patient_id": "P003",
+            "update_type": "accessibility_services_confirmed",
+            "delivery_status": "delivered",
+            "accessibility_services": {
+              "wheelchair_assistance": "confirmed",
+              "accessible_transport": "arranged",
+              "medical_equipment": ["glucose_monitor", "oxygen_concentrator"],
+              "special_accommodations": ["ground_floor_room", "accessible_bathroom"]
+            },
+            "delivery_confirmations": [
+              {
+                "recipient": "+1-555-555-6666",
+                "method": "sms",
+                "status": "delivered",
+                "timestamp": "2024-02-25T10:00:00Z",
+                "accessibility_format": "large_text"
+              },
+              {
+                "recipient": "+1-555-555-6666",
+                "method": "push",
+                "status": "delivered",
+                "timestamp": "2024-02-25T10:00:03Z",
+                "accessibility_features": ["voice_announcement", "high_contrast"]
+              }
+            ]
+          },
+          "accessibility_message": {
+            "sms": "Accessibility services confirmed for your arrival: wheelchair assistance, accessible transport, and medical equipment delivery arranged. Ground floor room reserved.",
+            "push": "Accessibility Services Confirmed - All special accommodations arranged for your arrival",
+            "voice": "Accessibility services confirmed. Wheelchair assistance, accessible transport, and medical equipment delivery have been arranged. Ground floor room reserved."
+          },
+          "accessibility_features": {
+            "large_text": true,
+            "voice_announcement": true,
+            "high_contrast": true,
+            "screen_reader_compatible": true
+          },
+          "timestamp": "2024-02-25T10:00:03Z",
+          "processing_time_ms": 280
+        }
+      }
+    },
+    "SendLanguageNotification": {
+      "success_response": {
+        "jsonrpc": "2.0",
+        "id": "guardian_notify_005_20251011_102845",
+        "result": {
+          "status": "success",
+          "notification_id": "LANG_NOTIF_33333_MNO",
+          "agent": "notification_agent",
+          "task": "SendLanguageNotification",
+          "language_details": {
+            "patient_id": "P002",
+            "notification_type": "coordination_update",
+            "language": "Spanish",
+            "translation_quality": "professional",
+            "cultural_adaptation": "Hispanic_healthcare_practices",
+            "delivery_status": "delivered",
+            "delivery_confirmations": [
+              {
+                "recipient": "+1-555-333-4444",
+                "method": "sms",
+                "status": "delivered",
+                "timestamp": "2024-02-20T08:00:00Z",
+                "language": "Spanish",
+                "translation_confidence": 0.98
+              }
+            ]
+          },
+          "translated_message": {
+            "original": "Flight UA5678 coordination update. Hotel and hospital arrangements confirmed. Expected arrival: 10:15 AM EST.",
+            "translated": "Actualización de coordinación del vuelo UA5678. Arreglos de hotel y hospital confirmados. Llegada esperada: 10:15 AM EST.",
+            "delivered": "Actualización: Su vuelo UA5678 está confirmado. Arreglos de hotel y hospital listos. Llegada: 10:15 AM EST."
+          },
+          "translation_details": {
+            "translator": "Google Translate API",
+            "confidence_score": 0.98,
+            "cultural_adaptation": true,
+            "medical_terminology": "verified"
+          },
+          "timestamp": "2024-02-20T08:00:00Z",
+          "processing_time_ms": 450
+        }
+      }
+    },
+    "SendRecoveryUpdate": {
+      "success_response": {
+        "jsonrpc": "2.0",
+        "id": "guardian_notify_006_20251011_102900",
+        "result": {
+          "status": "success",
+          "notification_id": "RECOVERY_NOTIF_44444_PQR",
+          "agent": "notification_agent",
+          "task": "SendRecoveryUpdate",
+          "recovery_details": {
+            "patient_id": "P001",
+            "update_type": "post_treatment_status",
+            "delivery_status": "delivered",
+            "treatment_details": {
+              "procedure": "angioplasty",
+              "doctor": "Dr. Smith",
+              "hospital": "LA Medical Center",
+              "treatment_date": "2024-02-16T09:00:00Z",
+              "status": "successful",
+              "recovery_time": "2-3_days"
+            },
+            "delivery_confirmations": [
+              {
+                "recipient": "+1-555-999-8888",
+                "method": "call",
+                "status": "completed",
+                "duration": "00:03:20",
+                "timestamp": "2024-02-16T16:30:00Z",
+                "family_response": "relieved_and_grateful"
+              },
+              {
+                "recipient": "family@example.com",
+                "method": "email",
+                "status": "delivered",
+                "timestamp": "2024-02-16T16:30:15Z",
+                "opened": true,
+                "clicked": false
+              }
+            ]
+          },
+          "recovery_message": {
+            "sms": "Great news! John's procedure was successful. He's recovering well and will be discharged in 2-3 days. Dr. Smith will provide more details.",
+            "call": "This is a positive update regarding John's medical procedure. The angioplasty was successful and he's recovering well. He should be discharged in 2-3 days.",
+            "email": "Treatment Update - John's angioplasty procedure was successful. He's recovering well and expected to be discharged in 2-3 days. Dr. Smith will provide detailed recovery instructions."
+          },
+          "medical_consent": {
+            "family_authorized": true,
+            "privacy_level": "family_update",
+            "medical_details_included": "summary_only"
+          },
+          "follow_up_schedule": {
+            "discharge_date": "2024-02-18T14:00:00Z",
+            "next_appointment": "2024-02-24T10:00:00Z",
+            "recovery_monitoring": "daily_check_ins"
+          },
+          "timestamp": "2024-02-16T16:30:15Z",
+          "processing_time_ms": 380
+        }
+      }
+    }
+  }
+}

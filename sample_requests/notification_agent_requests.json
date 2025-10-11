@@ -1,0 +1,309 @@
+{
+  "notification_agent_requests": {
+    "description": "Sample A2A JSON-RPC 2.0 requests that Guardian Orchestrator will send to Notification Agent",
+    "base_url": "https://notification-agent.aws.region.elb.amazonaws.com",
+    "endpoint": "/a2a/tasks",
+    "requests": {
+      "SendFamilyUpdate": {
+        "description": "Send status update to family members",
+        "request": {
+          "jsonrpc": "2.0",
+          "id": "guardian_notify_001_20251011_102732",
+          "method": "SendFamilyUpdate",
+          "params": {
+            "patient_id": "P001",
+            "notification_type": "status_update",
+            "recipients": [
+              {
+                "phone": "+1-555-999-8888",
+                "name": "Jane Doe",
+                "relationship": "spouse",
+                "preferred_method": "sms"
+              },
+              {
+                "email": "family@example.com",
+                "name": "John Doe Sr.",
+                "relationship": "father",
+                "preferred_method": "email"
+              }
+            ],
+            "message": {
+              "sms": "Update: John's flight AA1234 is on time. Hotel and hospital arrangements confirmed. Expected arrival: 2:30 PM PST.",
+              "email": "Medical Tourism Update for John Doe - Flight Status: On Time, Hotel: Confirmed, Hospital: Confirmed, ETA: 2:30 PM PST"
+            },
+            "orchestration_id": "ORCH_P001_20251011_102732",
+            "priority": "normal",
+            "context": {
+              "flight_number": "AA1234",
+              "arrival_time": "2024-02-15T14:30:00Z",
+              "hotel_status": "confirmed",
+              "hospital_status": "confirmed"
+            }
+          }
+        }
+      },
+      "SendEmergencyAlert": {
+        "description": "Send emergency alert to family and medical team",
+        "request": {
+          "jsonrpc": "2.0",
+          "id": "guardian_notify_002_20251011_102800",
+          "method": "SendEmergencyAlert",
+          "params": {
+            "patient_id": "P001",
+            "emergency_type": "medical_assistance_required",
+            "priority": "high",
+            "recipients": [
+              {
+                "phone": "+1-555-999-8888",
+                "name": "Jane Doe",
+                "relationship": "spouse",
+                "preferred_method": "call"
+              },
+              {
+                "phone": "+1-555-777-6666",
+                "name": "Emergency Contact",
+                "relationship": "sister",
+                "preferred_method": "sms"
+              },
+              {
+                "email": "emergency@hospital.com",
+                "name": "Medical Team",
+                "relationship": "medical_provider",
+                "preferred_method": "email"
+              }
+            ],
+            "emergency_details": {
+              "condition": "severe_pain",
+              "location": "LAX Terminal 1",
+              "urgency": "immediate_attention_required",
+              "medical_equipment_needed": ["wheelchair", "oxygen"]
+            },
+            "message": {
+              "sms": "URGENT: John requires immediate medical attention at LAX Terminal 1. Medical team has been notified.",
+              "call": "This is an emergency notification regarding John Doe. He requires immediate medical attention at LAX Terminal 1. Please contact the medical team immediately.",
+              "email": "EMERGENCY ALERT - John Doe requires immediate medical attention at LAX Terminal 1. Medical team has been notified and is responding."
+            },
+            "orchestration_id": "ORCH_P001_20251011_102732",
+            "escalation_required": true,
+            "context": {
+              "flight_number": "AA1234",
+              "current_location": "LAX_Terminal_1",
+              "medical_conditions": ["Diabetes", "Hypertension"]
+            }
+          }
+        }
+      },
+      "SendTreatmentReminder": {
+        "description": "Send treatment reminder to patient",
+        "request": {
+          "jsonrpc": "2.0",
+          "id": "guardian_notify_003_20251011_102815",
+          "method": "SendTreatmentReminder",
+          "params": {
+            "patient_id": "P001",
+            "reminder_type": "appointment_reminder",
+            "recipients": [
+              {
+                "phone": "+1-555-111-2222",
+                "name": "John Doe",
+                "relationship": "patient",
+                "preferred_method": "sms"
+              }
+            ],
+            "appointment_details": {
+              "doctor_name": "Dr. Smith",
+              "hospital_name": "LA Medical Center",
+              "appointment_time": "2024-02-16T09:00:00Z",
+              "procedure_type": "cardiac_procedure",
+              "preparation_instructions": [
+                "Fast for 8 hours before appointment",
+                "Take morning medications as usual",
+                "Bring insurance card and ID"
+              ]
+            },
+            "message": {
+              "sms": "Reminder: Your appointment with Dr. Smith is tomorrow at 9:00 AM. Please arrive 30 minutes early. Fast for 8 hours before appointment.",
+              "push": "Medical Appointment Reminder - Dr. Smith, LA Medical Center, Tomorrow 9:00 AM"
+            },
+            "orchestration_id": "ORCH_P001_20251011_102732",
+            "reminder_timing": "24_hours_before",
+            "context": {
+              "procedure_type": "angioplasty",
+              "hospital_location": "123 Medical Drive, Los Angeles, CA"
+            }
+          }
+        }
+      },
+      "SendAccessibilityUpdate": {
+        "description": "Send accessibility services update to patient",
+        "request": {
+          "jsonrpc": "2.0",
+          "id": "guardian_notify_004_20251011_102830",
+          "method": "SendAccessibilityUpdate",
+          "params": {
+            "patient_id": "P003",
+            "update_type": "accessibility_services_confirmed",
+            "recipients": [
+              {
+                "phone": "+1-555-555-6666",
+                "name": "Bob Wilson",
+                "relationship": "patient",
+                "preferred_method": "sms"
+              }
+            ],
+            "accessibility_services": {
+              "wheelchair_assistance": "confirmed",
+              "accessible_transport": "arranged",
+              "medical_equipment": ["glucose_monitor", "oxygen_concentrator"],
+              "language_support": "English",
+              "special_accommodations": ["ground_floor_room", "accessible_bathroom"]
+            },
+            "message": {
+              "sms": "Accessibility services confirmed for your arrival: wheelchair assistance, accessible transport, and medical equipment delivery arranged. Ground floor room reserved.",
+              "push": "Accessibility Services Confirmed - All special accommodations arranged for your arrival"
+            },
+            "orchestration_id": "ORCH_P003_20251011_102740",
+            "priority": "normal",
+            "context": {
+              "flight_number": "DL9012",
+              "arrival_time": "2024-02-25T16:30:00Z",
+              "medical_conditions": ["Diabetes", "Respiratory"],
+              "mobility_needs": ["wheelchair_assistance", "oxygen_support"]
+            }
+          }
+        }
+      },
+      "SendLanguageNotification": {
+        "description": "Send notification in patient's preferred language",
+        "request": {
+          "jsonrpc": "2.0",
+          "id": "guardian_notify_005_20251011_102845",
+          "method": "SendLanguageNotification",
+          "params": {
+            "patient_id": "P002",
+            "notification_type": "coordination_update",
+            "language": "Spanish",
+            "recipients": [
+              {
+                "phone": "+1-555-333-4444",
+                "name": "Jane Smith",
+                "relationship": "patient",
+                "preferred_method": "sms"
+              }
+            ],
+            "message": {
+              "original": "Flight UA5678 coordination update. Hotel and hospital arrangements confirmed. Expected arrival: 10:15 AM EST.",
+              "translated": "Actualización de coordinación del vuelo UA5678. Arreglos de hotel y hospital confirmados. Llegada esperada: 10:15 AM EST.",
+              "sms": "Actualización: Su vuelo UA5678 está confirmado. Arreglos de hotel y hospital listos. Llegada: 10:15 AM EST."
+            },
+            "orchestration_id": "ORCH_P002_20251011_102730",
+            "translation_quality": "professional",
+            "cultural_adaptation": "Hispanic_healthcare_practices",
+            "context": {
+              "flight_number": "UA5678",
+              "arrival_time": "2024-02-20T10:15:00Z",
+              "destination": "Miami",
+              "medical_conditions": ["Heart condition", "Diabetes"]
+            }
+          }
+        }
+      },
+      "SendRecoveryUpdate": {
+        "description": "Send post-treatment recovery update to family",
+        "request": {
+          "jsonrpc": "2.0",
+          "id": "guardian_notify_006_20251011_102900",
+          "method": "SendRecoveryUpdate",
+          "params": {
+            "patient_id": "P001",
+            "update_type": "post_treatment_status",
+            "recipients": [
+              {
+                "phone": "+1-555-999-8888",
+                "name": "Jane Doe",
+                "relationship": "spouse",
+                "preferred_method": "call"
+              },
+              {
+                "email": "family@example.com",
+                "name": "Family Members",
+                "relationship": "family",
+                "preferred_method": "email"
+              }
+            ],
+            "treatment_details": {
+              "procedure": "angioplasty",
+              "doctor": "Dr. Smith",
+              "hospital": "LA Medical Center",
+              "treatment_date": "2024-02-16T09:00:00Z",
+              "status": "successful",
+              "recovery_time": "2-3_days"
+            },
+            "message": {
+              "sms": "Great news! John's procedure was successful. He's recovering well and will be discharged in 2-3 days. Dr. Smith will provide more details.",
+              "call": "This is a positive update regarding John's medical procedure. The angioplasty was successful and he's recovering well. He should be discharged in 2-3 days.",
+              "email": "Treatment Update - John's angioplasty procedure was successful. He's recovering well and expected to be discharged in 2-3 days. Dr. Smith will provide detailed recovery instructions."
+            },
+            "orchestration_id": "ORCH_P001_20251011_102732",
+            "priority": "normal",
+            "medical_consent": "family_authorized",
+            "context": {
+              "procedure_type": "angioplasty",
+              "discharge_date": "2024-02-18T14:00:00Z",
+              "follow_up_appointment": "2024-02-24T10:00:00Z"
+            }
+          }
+        }
+      }
+    },
+    "expected_response_format": {
+      "success_response": {
+        "jsonrpc": "2.0",
+        "id": "guardian_notify_001_20251011_102732",
+        "result": {
+          "status": "success",
+          "notification_id": "NOTIF_12345_ABC",
+          "agent": "notification_agent",
+          "task": "SendFamilyUpdate",
+          "delivery_details": {
+            "patient_id": "P001",
+            "delivery_status": "delivered",
+            "recipients_notified": 2,
+            "delivery_methods": ["sms", "email"],
+            "delivery_timestamp": "2024-02-15T14:35:00Z"
+          },
+          "timestamp": "2024-02-15T14:35:00Z"
+        }
+      },
+      "error_response": {
+        "jsonrpc": "2.0",
+        "id": "guardian_notify_001_20251011_102732",
+        "error": {
+          "code": -32000,
+          "message": "Notification delivery failed",
+          "data": {
+            "error_type": "RECIPIENT_UNAVAILABLE",
+            "details": "Primary recipient phone number is not reachable",
+            "retry_available": true,
+            "fallback_methods": ["email", "push_notification"]
+          }
+        }
+      }
+    },
+    "implementation_notes": {
+      "authentication": "Use A2A API tokens for authentication",
+      "rate_limiting": "Handle SMS/email rate limiting with exponential backoff",
+      "retry_logic": "Implement retry for failed deliveries with max 3 attempts",
+      "logging": "Log all notification attempts and delivery status",
+      "sms_provider": "Use Twilio or similar SMS service",
+      "email_provider": "Use SendGrid or similar email service",
+      "push_notifications": "Support mobile push notifications via FCM/APNS",
+      "translation": "Integrate with Google Translate or professional translation services",
+      "language_support": "Support multiple languages with cultural adaptation",
+      "emergency_escalation": "Implement emergency notification escalation procedures",
+      "delivery_confirmation": "Track delivery status and provide confirmation",
+      "privacy_compliance": "Ensure HIPAA compliance for medical notifications",
+      "accessibility": "Support accessibility features like large text, voice messages"
+    }
+  }
+}
