@@ -18,6 +18,13 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 import uvicorn
 
+# Import official AG-UI SDK
+from ag_ui.core import (
+    Event, EventType, BaseEvent, CustomEvent, 
+    Message, UserMessage, AssistantMessage, SystemMessage,
+    Context, State, RunAgentInput
+)
+
 # Import our orchestrator and scheduler
 from .orchestrator import guardian_orchestrator
 from .scheduler import guardian_scheduler
@@ -27,8 +34,8 @@ from .scheduler import guardian_scheduler
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# AG-UI Standard Event Types (based on AG-UI protocol)
-class AGUIStandardEvents:
+# Guardian-specific Event Types (extending AG-UI standard events)
+class GuardianEvents:
     """AG-UI standard event types for agent-user interaction"""
     
     # Core Agent Events
@@ -72,16 +79,13 @@ class AGUIStandardEvents:
     CALL_CONTEXT_SHARED = "call_context_shared"
     SCHEDULE_AMENDMENT = "schedule_amendment"
 
-# AG-UI Compatible Models
-class AGUIEvent(BaseModel):
-    """AG-UI standard event model"""
-    type: str = Field(..., description="Event type following AG-UI standards")
-    timestamp: str = Field(..., description="ISO timestamp")
-    data: Dict[str, Any] = Field(..., description="Event payload data")
+# Guardian Models (using official AG-UI SDK)
+class GuardianEvent(CustomEvent):
+    """Guardian-specific event extending AG-UI CustomEvent"""
     user_id: Optional[str] = Field(default=None, description="User identifier")
     session_id: Optional[str] = Field(default=None, description="Session identifier")
-    agent_id: Optional[str] = Field(default="guardian_orchestrator", description="Agent identifier")
-    metadata: Optional[Dict[str, Any]] = Field(default=None, description="Additional metadata")
+    agent_id: str = Field(default="guardian_orchestrator", description="Agent identifier")
+    guardian_data: Dict[str, Any] = Field(default_factory=dict, description="Guardian-specific data")
 
 class AGUIUserMessage(BaseModel):
     """AG-UI user message model"""
@@ -167,7 +171,7 @@ class StayExtensionRequest(BaseModel):
 
 # Global event storage and session management
 active_sessions: Dict[str, Dict[str, Any]] = {}
-active_events: Dict[str, List[AGUIEvent]] = {}
+active_events: Dict[str, List[GuardianEvent]] = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -219,9 +223,9 @@ def emit_agui_event(
     session_id: str = None,
     agent_id: str = "guardian_orchestrator",
     metadata: Dict[str, Any] = None
-) -> AGUIEvent:
+) -> GuardianEvent:
     """Emit an AG-UI compatible event"""
-    event = AGUIEvent(
+    event = GuardianEvent(
         type=event_type,
         timestamp=datetime.now().isoformat(),
         data=data,

@@ -7,5 +7,7 @@ openai>=1.0.0
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 pydantic>=2.0.0
+# AG-UI Protocol SDK
+git+https://github.com/ag-ui-protocol/ag-ui.git#subdirectory=python-sdk
 # Scheduler
 apscheduler>=3.10.0
