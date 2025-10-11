@@ -874,30 +874,104 @@ class GuardianOrchestrator:
                 "timestamp": datetime.now().isoformat()
             }
     
-    async def _get_complete_patient_context(self, patient_id: str) -> Dict[str, Any]:
-        """Get complete patient context for Voice Agent"""
-        # Get from knowledge base (decrypted)
-        patient_context = self.knowledge_base.data_manager.get_patient_data(patient_id)
-        
-        # Get from active orchestration
-        orchestration_data = None
-        for orchestration_id, data in self.active_orchestrations.items():
-            if data.get("patient_id") == patient_id:
-                orchestration_data = data
-                break
-        
-        if orchestration_data:
-            # Merge orchestration data
-            patient_context.update({
-                "orchestration_id": orchestration_data.get("orchestration_id"),
-                "orchestration_status": orchestration_data.get("status"),
-                "tasks": orchestration_data.get("tasks", {}),
-                "flight_data": orchestration_data.get("flight_data", {}),
-                "created_at": orchestration_data.get("created_at"),
-                "updated_at": orchestration_data.get("updated_at")
-            })
-        
-        return patient_context
+    async def _get_comprehensive_call_context(self, user_id: str) -> Dict[str, Any]:
+        """Get comprehensive patient context for Voice Agent calls"""
+        try:
+            # Get user data from dummy database
+            user_bookings = dummy_db.get_user_bookings(user_id)
+            user_flights = dummy_db.get_user_flights(user_id)
+            user_location = dummy_db.get_user_location(user_id)
+            
+            if not user_bookings:
+                logger.warning(f"No booking data found for user {user_id}")
+                # Return default context for users without bookings in the exact format required
+                return {
+                    "jsonrpc": "2.0",
+                    "method": "configure_patient_call",
+                    "params": {
+                        "patient_name": "Guest User",
+                        "patient_id": user_id,
+                        "patient_language": "English",
+                        "patient_contact": "",
+                        "patient_dob": "Not specified",
+                        "companion_name": "Not specified",
+                        "check_in_date": "",
+                        "check_out_date": "",
+                        "hotel_name": "Not booked",
+                        "hotel_room_number": "Not assigned",
+                        "shuttle_driver": "Not assigned",
+                        "hospital_name": "Not scheduled",
+                        "doctor_name": "Not assigned",
+                        "appointment_date": "",
+                        "appointment_time": "",
+                        "pickup_time": "",
+                        "discharge_date": "",
+                        "discharge_status": "Pending"
+                    },
+                    "id": f"orchestrator-request-{user_id}"
+                }
+            
+            booking = user_bookings[0]
+            flight = user_flights[0] if user_flights else {}
+            
+            # Prepare comprehensive context for voice agent in the exact format required
+            context_data = {
+                "jsonrpc": "2.0",
+                "method": "configure_patient_call",
+                "params": {
+                    "patient_name": booking.get("patient_name", "Guest User"),
+                    "patient_id": booking.get("user_id", user_id),
+                    "patient_language": booking.get("preferred_language", "English"),
+                    "patient_contact": booking.get("emergency_contacts", [""])[0] if booking.get("emergency_contacts") else "",
+                    "patient_dob": booking.get("date_of_birth", "Not specified"),
+                    "companion_name": booking.get("companion_name", "Not specified"),
+                    "check_in_date": booking.get("hotel_check_in", "").replace("T", " ").split(".")[0] if booking.get("hotel_check_in") else "",
+                    "check_out_date": booking.get("new_discharge_date", "").replace("T", " ").split(".")[0] if booking.get("new_discharge_date") else "",
+                    "hotel_name": booking.get("hotel_name", "Denver Accessible Suites"),
+                    "hotel_room_number": booking.get("hotel_room_number", "Suite 205"),
+                    "shuttle_driver": booking.get("shuttle_driver", "Not assigned"),
+                    "hospital_name": booking.get("hospital_name", "Denver Medical Center"),
+                    "doctor_name": booking.get("doctor_name", "Dr. Smith"),
+                    "appointment_date": booking.get("hospital_appointment_time", "").split("T")[0] if booking.get("hospital_appointment_time") else "",
+                    "appointment_time": booking.get("hospital_appointment_time", "").split("T")[1][:5] + " AM" if booking.get("hospital_appointment_time") else "",
+                    "pickup_time": booking.get("pickup_time", "Not scheduled"),
+                    "discharge_date": booking.get("new_discharge_date", "").replace("T", " ").split(".")[0] if booking.get("new_discharge_date") else "",
+                    "discharge_status": booking.get("discharge_status", "Pending")
+                },
+                "id": f"orchestrator-request-{user_id}"
+            }
+            
+            return context_data
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to get comprehensive call context: {e}")
+            # Return minimal context on error in the exact format required
+            return {
+                "jsonrpc": "2.0",
+                "method": "configure_patient_call",
+                "params": {
+                    "patient_name": "Guest User",
+                    "patient_id": user_id,
+                    "patient_language": "English",
+                    "patient_contact": "",
+                    "patient_dob": "Not specified",
+                    "companion_name": "Not specified",
+                    "check_in_date": "",
+                    "check_out_date": "",
+                    "hotel_name": "Not available",
+                    "hotel_room_number": "Not available",
+                    "shuttle_driver": "Not available",
+                    "hospital_name": "Not available",
+                    "doctor_name": "Not available",
+                    "appointment_date": "",
+                    "appointment_time": "",
+                    "pickup_time": "",
+                    "discharge_date": "",
+                    "discharge_status": "Pending"
+                },
+                "id": f"orchestrator-request-{user_id}",
+                "error": str(e)
+            }
     
     async def _handle_flight_amendment(self, orchestration_id: str, amendment_data: Dict[str, Any]):
         """Handle flight-related amendments"""

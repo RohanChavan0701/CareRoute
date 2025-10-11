@@ -34,58 +34,8 @@ from .scheduler import guardian_scheduler
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Guardian-specific Event Types (extending AG-UI standard events)
-class GuardianEvents:
-    """AG-UI standard event types for agent-user interaction"""
-    
-    # Core Agent Events
-    AGENT_START = "agent_start"
-    AGENT_END = "agent_end"
-    AGENT_ERROR = "agent_error"
-    AGENT_THINKING = "agent_thinking"
-    
-    # User Interaction Events
-    USER_MESSAGE = "user_message"
-    AGENT_MESSAGE = "agent_message"
-    USER_ACTION = "user_action"
-    AGENT_ACTION = "agent_action"
-    
-    # State Management Events
-    STATE_UPDATE = "state_update"
-    CONTEXT_UPDATE = "context_update"
-    
-    # Tool and Function Events
-    TOOL_CALL = "tool_call"
-    TOOL_RESULT = "tool_result"
-    FUNCTION_CALL = "function_call"
-    FUNCTION_RESULT = "function_result"
-    
-    # UI Events
-    UI_UPDATE = "ui_update"
-    UI_COMPONENT_UPDATE = "ui_component_update"
-    UI_STREAMING_UPDATE = "ui_streaming_update"
-    
-    # Custom Guardian Events (extending AG-UI)
-    ORCHESTRATION_STARTED = "orchestration_started"
-    ORCHESTRATION_COMPLETED = "orchestration_completed"
-    FLIGHT_STATUS_UPDATE = "flight_status_update"
-    HOTEL_CONFIRMED = "hotel_confirmed"
-    HOSPITAL_CONFIRMED = "hospital_confirmed"
-    NOTIFICATION_SENT = "notification_sent"
-    VOICE_CALL_INITIATED = "voice_call_initiated"
-    ACCESSIBILITY_ARRANGED = "accessibility_arranged"
-    KNOWLEDGE_QUERY_RESPONSE = "knowledge_query_response"
-    INCOMING_CALL = "incoming_call"
-    CALL_CONTEXT_SHARED = "call_context_shared"
-    SCHEDULE_AMENDMENT = "schedule_amendment"
-
-# Guardian Models (using official AG-UI SDK)
-class GuardianEvent(CustomEvent):
-    """Guardian-specific event extending AG-UI CustomEvent"""
-    user_id: Optional[str] = Field(default=None, description="User identifier")
-    session_id: Optional[str] = Field(default=None, description="Session identifier")
-    agent_id: str = Field(default="guardian_orchestrator", description="Agent identifier")
-    guardian_data: Dict[str, Any] = Field(default_factory=dict, description="Guardian-specific data")
+# Use standard AG-UI protocol - no custom event types needed
+# The AG-UI SDK provides all necessary event types and structures
 
 class AGUIUserMessage(BaseModel):
     """AG-UI user message model"""
@@ -223,16 +173,21 @@ def emit_agui_event(
     session_id: str = None,
     agent_id: str = "guardian_orchestrator",
     metadata: Dict[str, Any] = None
-) -> GuardianEvent:
-    """Emit an AG-UI compatible event"""
-    event = GuardianEvent(
-        type=event_type,
-        timestamp=datetime.now().isoformat(),
-        data=data,
-        user_id=user_id,
-        session_id=session_id,
-        agent_id=agent_id,
-        metadata=metadata or {}
+) -> CustomEvent:
+    """Emit an AG-UI compatible event using the standard protocol"""
+    event_data = {
+        "data": data,
+        "user_id": user_id,
+        "session_id": session_id,
+        "agent_id": agent_id,
+        "metadata": metadata or {}
+    }
+    
+    event = CustomEvent(
+        type=EventType.CUSTOM,
+        timestamp=int(datetime.now().timestamp() * 1000),  # milliseconds
+        name=event_type,
+        value=event_data
     )
     
     # Store event for real-time access
@@ -269,7 +224,6 @@ async def agui_health_check():
         "timestamp": datetime.now().isoformat(),
         "capabilities": [
             "orchestration",
-            "knowledge_query",
             "real_time_events",
             "voice_interaction",
             "schedule_management"
@@ -277,59 +231,61 @@ async def agui_health_check():
     }
 
 @app.post("/ag-ui/message")
-async def handle_user_message(message: AGUIUserMessage, background_tasks: BackgroundTasks):
+async def handle_user_message(message: UserMessage, background_tasks: BackgroundTasks):
     """Handle user message following AG-UI protocol"""
     try:
-        session_id = message.session_id or f"session_{uuid.uuid4().hex[:8]}"
+        # Extract user_id from message.name (AG-UI standard)
+        user_id = message.name or "unknown_user"
+        session_id = f"session_{uuid.uuid4().hex[:8]}"
         
-        # Emit user message event
+        # Emit user message event using standard AG-UI protocol
         emit_agui_event(
-            AGUIStandardEvents.USER_MESSAGE,
+            "user_message",
             {
-                "message": message.message,
-                "message_type": message.message_type,
-                "context": message.context or {}
+                "content": message.content,
+                "message_id": message.id,
+                "user_name": message.name
             },
-            user_id=message.user_id,
+            user_id=user_id,
             session_id=session_id
         )
         
         # Process message based on content
-        if "start orchestration" in message.message.lower() or "book" in message.message.lower():
+        if "start orchestration" in message.content.lower() or "book" in message.content.lower():
             # Extract booking information from message or context
             booking_data = extract_booking_from_message(message)
             if booking_data:
-                background_tasks.add_task(process_booking_request, booking_data, message.user_id, session_id)
-                return AGUIAgentMessage(
-                    message="I've started your travel orchestration! I'll coordinate with all the agents to ensure everything is ready for your medical tourism trip.",
-                    user_id=message.user_id,
-                    session_id=session_id,
-                    message_type="text",
-                    components=[
-                        {
-                            "type": "status_card",
-                            "data": {
-                                "title": "Orchestration Started",
-                                "status": "active",
-                                "details": "Coordinating flight, hotel, hospital, and accessibility services"
-                            }
-                        }
-                    ]
+                background_tasks.add_task(process_booking_request, booking_data, user_id, session_id)
+                return AssistantMessage(
+                    id=f"msg_{uuid.uuid4().hex[:8]}",
+                    role="assistant",
+                    content="I've started your travel orchestration! I'll coordinate with all the agents to ensure everything is ready for your medical tourism trip.",
+                    name="guardian_orchestrator"
                 )
         
-        elif "flight status" in message.message.lower() or "flight" in message.message.lower():
-            # Handle flight status query
-            response = await handle_flight_query(message.user_id, message.message)
-            return AGUIAgentMessage(
-                message=response.get("response", "I'm checking your flight status..."),
-                user_id=message.user_id,
-                session_id=session_id,
-                message_type="text"
-            )
+        elif "flight status" in message.content.lower() or "flight" in message.content.lower():
+            # Handle flight status query - get trip status
+            trip_status = await guardian_orchestrator.get_user_trip_status(user_id)
+            flight_info = trip_status.get("data", {}).get("flight_status", {})
+            
+            if flight_info:
+                return AssistantMessage(
+                    id=f"msg_{uuid.uuid4().hex[:8]}",
+                    role="assistant",
+                    content=f"Your flight {flight_info.get('flight_number', 'N/A')} is {flight_info.get('status', 'unknown')}. Estimated arrival: {flight_info.get('estimated_arrival_local', 'N/A')}",
+                    name="guardian_orchestrator"
+                )
+            else:
+                return AssistantMessage(
+                    id=f"msg_{uuid.uuid4().hex[:8]}",
+                    role="assistant",
+                    content="I don't have any active flight information for you. Please start an orchestration first.",
+                    name="guardian_orchestrator"
+                )
         
         elif "help" in message.message.lower() or "what can you do" in message.message.lower():
             return AGUIAgentMessage(
-                message="I'm Guardian, your medical tourism orchestrator. I can help you with:\n\n• Start travel orchestration\n• Check flight status\n• Query knowledge base\n• Handle schedule changes\n• Coordinate with hotels, hospitals, and accessibility services\n\nWhat would you like to do?",
+                message="I'm Guardian, your medical tourism orchestrator. I can help you with:\n\n• Start travel orchestration\n• Check flight status\n• Coordinate with hotels, hospitals, and accessibility services\n• Handle schedule changes\n\nFor detailed questions, please use the voice call button to speak directly with our support team.",
                 user_id=message.user_id,
                 session_id=session_id,
                 message_type="text",
@@ -340,27 +296,59 @@ async def handle_user_message(message: AGUIUserMessage, background_tasks: Backgr
                             "buttons": [
                                 {"label": "Start Orchestration", "action": "start_booking"},
                                 {"label": "Check Flight Status", "action": "check_flight"},
-                                {"label": "Ask Question", "action": "knowledge_query"}
+                                {"label": "Call Voice Support", "action": "voice_call"}
                             ]
                         }
                     }
                 ]
             )
         
-        else:
-            # Default knowledge base query
-            response = await handle_general_query(message.user_id, message.message)
+        elif "call" in message.message.lower() or "voice" in message.message.lower() or "speak" in message.message.lower():
+            # Trigger voice call with patient context
+            patient_context = await guardian_orchestrator._get_comprehensive_call_context(message.user_id)
+            
+            # Send context to voice agent
+            voice_result = await guardian_orchestrator._send_a2a_task(
+                "voice_agent", 
+                "initiate_call_with_context",
+                {
+                    "user_id": message.user_id,
+                    "context": patient_context,
+                    "call_reason": "user_requested_support"
+                }
+            )
+            
             return AGUIAgentMessage(
-                message=response.get("response", "I understand you're asking about your medical tourism trip. Let me help you with that."),
+                message="I'm connecting you to our voice support team with your complete travel information. They'll be able to help you with any questions about your medical tourism trip.",
                 user_id=message.user_id,
                 session_id=session_id,
                 message_type="text"
             )
         
+        else:
+            # Default response - suggest voice call for complex queries
+            return AGUIAgentMessage(
+                message="I understand you have a question about your medical tourism trip. For detailed assistance, please use the voice call button to speak directly with our support team who will have access to all your travel information.",
+                user_id=message.user_id,
+                session_id=session_id,
+                message_type="text",
+                components=[
+                    {
+                        "type": "action_buttons",
+                        "data": {
+                            "buttons": [
+                                {"label": "Call Voice Support", "action": "voice_call"},
+                                {"label": "Check Trip Status", "action": "check_status"}
+                            ]
+                        }
+                    }
+                ]
+            )
+        
     except Exception as e:
         logger.error(f"❌ Failed to handle user message: {e}")
         emit_agui_event(
-            AGUIStandardEvents.AGENT_ERROR,
+            GuardianEvents.AGENT_ERROR,
             {"error": str(e), "message": message.message},
             user_id=message.user_id,
             session_id=message.session_id
@@ -399,7 +387,7 @@ async def process_booking_request(booking_data: Dict[str, Any], user_id: str, se
     try:
         # Emit orchestration start event
         emit_agui_event(
-            AGUIStandardEvents.ORCHESTRATION_STARTED,
+            GuardianEvents.ORCHESTRATION_STARTED,
             {
                 "patient_name": booking_data["patient_name"],
                 "flight_number": booking_data["flight_number"],
@@ -434,21 +422,7 @@ async def process_booking_request(booking_data: Dict[str, Any], user_id: str, se
             session_id=session_id
         )
 
-async def handle_flight_query(user_id: str, query: str) -> Dict[str, Any]:
-    """Handle flight-related queries"""
-    try:
-        return await guardian_orchestrator.handle_knowledge_query(user_id, query, {})
-    except Exception as e:
-        logger.error(f"❌ Flight query failed: {e}")
-        return {"response": "I'm having trouble checking your flight status right now. Please try again later."}
-
-async def handle_general_query(user_id: str, query: str) -> Dict[str, Any]:
-    """Handle general knowledge queries"""
-    try:
-        return await guardian_orchestrator.handle_knowledge_query(user_id, query, {})
-    except Exception as e:
-        logger.error(f"❌ General query failed: {e}")
-        return {"response": "I'm here to help with your medical tourism trip. What would you like to know?"}
+# FAQ/knowledge base functionality removed - users should use voice agent for detailed questions
 
 # AG-UI Event Streaming
 @app.get("/ag-ui/events/{user_id}")
@@ -703,6 +677,56 @@ async def get_scheduler_status():
         
     except Exception as e:
         logger.error(f"❌ Failed to get scheduler status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/guardian/voice/call")
+async def trigger_voice_call(request: UserRequest):
+    """Trigger voice call with complete patient context"""
+    try:
+        # Get comprehensive patient context
+        patient_context = await guardian_orchestrator._get_comprehensive_call_context(request.user_id)
+        
+        # Send context to voice agent
+        voice_result = await guardian_orchestrator._send_a2a_task(
+            "voice_agent", 
+            "initiate_call_with_context",
+            {
+                "user_id": request.user_id,
+                "context": patient_context,
+                "call_reason": "user_requested_support"
+            }
+        )
+        
+        # Emit event
+        emit_agui_event(
+            GuardianEvents.VOICE_CALL_INITIATED,
+            {
+                "user_id": request.user_id,
+                "context_sent": True,
+                "voice_agent_response": voice_result
+            },
+            user_id=request.user_id,
+            session_id=request.session_id
+        )
+        
+        return {
+            "status": "success",
+            "data": {
+                "message": "Voice call initiated with complete patient context",
+                "context_sent": True,
+                "voice_agent_response": voice_result
+            },
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to trigger voice call: {e}")
+        emit_agui_event(
+            GuardianEvents.AGENT_ERROR,
+            {"error": str(e), "action": "voice_call_initiation"},
+            user_id=request.user_id,
+            session_id=request.session_id
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 # ==================== ADAPTIVE STAY MANAGEMENT ENDPOINTS ====================
