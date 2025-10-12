@@ -1,6 +1,6 @@
 # CareRoute Medical Tourism Orchestrator
 
-🏥 **CareRoute** - *where care meets comfort* - is a comprehensive medical tourism orchestration system that coordinates multi-agent workflows for elderly travelers, providing seamless coordination between hotels, hospitals, voice agents, and family notifications.
+🏥 **CareRoute**, *where care meets comfort* - is a comprehensive medical tourism orchestration system that coordinates multi-agent workflows for elderly travelers, providing seamless coordination between hotels, hospitals, voice agents, and family notifications.
 
 ## 📁 Repository Structure
 
@@ -83,19 +83,19 @@ CareRoute automatically orchestrates:
 - **Repository**: [Voice Agent Repository](https://github.com/uma1902/notification-system) (Voice functionality)
 - **Function**: AI-powered voice communication with patients
 - **Integration**: JSON-RPC protocol at `http://18.217.151.15:8000/jsonrpc`
-- **Status**: ✅ **WORKING** - Successfully tested with complete patient context
+- **Status**: - Successfully tested with complete patient context
 
 #### 📧 Notification Agent
 - **Repository**: [Notification System Repository](https://github.com/uma1902/notification-system)
 - **Function**: Email/SMS notifications to patients and families
 - **Integration**: JSON-RPC protocol at `http://3.143.225.130:8000/a2a/tasks`
-- **Status**: ✅ **WORKING** - Successfully tested with booking confirmations
+- **Status**: - Successfully tested with booking confirmations
 
 #### ✈️ Flight Agent
 - **Repository**: [Flight API Repository](https://github.com/rohanpc0701/Codefest_Flightapi)
 - **Function**: Real-time flight status and tracking
 - **Integration**: JSON-RPC protocol at `http://54.158.27.0:8001/a2a`
-- **Status**: ✅ **WORKING** - Successfully tested with UAL606 flight data
+- **Status**: - Successfully tested with UAL606 flight data
 - **Features**: Live flight data, delay notifications, gate information
 
 ### Future Agents Ideas
@@ -380,7 +380,6 @@ curl http://3.16.29.184:8000/health
 - **End-to-end orchestration** from booking to discharge
 - **Real-time flight monitoring** with automated updates via external Flight Agent
 - **Multi-agent coordination** via JSON-RPC protocol
-- **Dummy data storage** for testing (bypassing database per user requirements)
 
 ###  **Deployment**
 - **Docker containerization** with health checks
