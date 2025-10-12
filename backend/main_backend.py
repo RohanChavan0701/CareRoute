@@ -20,6 +20,7 @@ import uvicorn
 
 # Import our orchestrator and scheduler
 from .orchestrator import guardian_orchestrator
+from .database.orchestrator_service import orchestrator_db_service
 from .scheduler import guardian_scheduler
 from .fcm_service import fcm_service
 
@@ -60,7 +61,20 @@ app.add_middleware(
 async def startup_event():
     """Startup event handler"""
     logger.info("🚀 Guardian Medical Tourism Orchestrator starting up...")
-    logger.info("✅ Backend initialized without database")
+    
+    # Initialize database service
+    try:
+        # Test database connection
+        if orchestrator_db_service.db_manager.test_connection():
+            logger.info("✅ Database connection successful")
+            logger.info("✅ Backend initialized with HIPAA database")
+        else:
+            logger.warning("⚠️ Database connection failed - falling back to dummy data")
+            logger.info("✅ Backend initialized without database")
+    except Exception as e:
+        logger.warning(f"⚠️ Database initialization failed: {e} - falling back to dummy data")
+        logger.info("✅ Backend initialized without database")
+    
     logger.info("✅ Guardian Orchestrator ready")
     
     # Start scheduler

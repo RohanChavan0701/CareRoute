@@ -12,6 +12,7 @@ from typing import Dict, Any, List, Optional
 import httpx
 from .knowledge_base import knowledge_base
 from .dummy_data import dummy_db
+from .database.orchestrator_service import orchestrator_db_service
 from .fcm_service import fcm_service
 
 # Configure logging
@@ -33,7 +34,7 @@ class GuardianOrchestrator:
             "hotel_agent": os.getenv("HOTEL_AGENT_URL", "https://hotel-agent.aws.region.elb.amazonaws.com"),
             "hospital_agent": os.getenv("HOSPITAL_AGENT_URL", "https://hospital-agent.aws.region.elb.amazonaws.com"),
             "voice_agent": os.getenv("VOICE_AGENT_URL", "http://18.217.151.15:8000/jsonrpc"),
-            "notification_agent": os.getenv("NOTIFICATION_AGENT_URL", "https://notification-system-h36d.onrender.com/a2a/tasks"),
+            "notification_agent": os.getenv("NOTIFICATION_AGENT_URL", "https://notification-system-h36d.onrender.com"),
             "flight_agent": os.getenv("FLIGHT_AGENT_URL", "http://54.158.27.0:8001/a2a"),
             "accessibility_agent": os.getenv("ACCESSIBILITY_AGENT_URL", "https://accessibility-agent.aws.region.elb.amazonaws.com"),
         }
@@ -46,6 +47,9 @@ class GuardianOrchestrator:
         
         # Initialize HIPAA-compliant Knowledge Base
         self.knowledge_base = knowledge_base
+        
+        # Initialize database service
+        self.orchestrator_db_service = orchestrator_db_service
         
         logger.info("Guardian A2A Orchestrator with Knowledge Base initialized")
     
@@ -928,10 +932,10 @@ class GuardianOrchestrator:
     async def _get_comprehensive_call_context(self, user_id: str) -> Dict[str, Any]:
         """Get comprehensive patient context for Voice Agent calls"""
         try:
-            # Get user data from dummy database
-            user_bookings = dummy_db.get_user_bookings(user_id)
-            user_flights = dummy_db.get_user_flights(user_id)
-            user_location = dummy_db.get_user_location(user_id)
+            # Get user data from database
+            user_bookings = orchestrator_db_service.get_user_bookings(user_id)
+            user_flights = orchestrator_db_service.get_user_flights(user_id)
+            user_location = orchestrator_db_service.get_user_location(user_id)
             
             if not user_bookings:
                 logger.warning(f"No booking data found for user {user_id}")
@@ -1282,6 +1286,187 @@ class GuardianOrchestrator:
             
         except Exception as e:
             logger.error(f"❌ Error sending booking notification: {e}")
+
+    async def send_hotel_booking_notification(self, booking_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Send hotel booking notification using the exact format specified"""
+        try:
+            logger.info(f"🏨 Sending hotel booking notification for {booking_data.get('booking_id')}")
+            
+            # Use the exact format provided by the user
+            notification_payload = {
+                "jsonrpc": "2.0",
+                "id": booking_data.get("booking_id", "hotel_001"),
+                "method": "SendHotelBookingNotification",
+                "params": {
+                    "booking_id": booking_data.get("booking_id", "HOTEL_12345"),
+                    "notification_type": booking_data.get("notification_type", "hotel_booking_confirmation"),
+                    "recipients": booking_data.get("recipients", []),
+                    "hotel_details": booking_data.get("hotel_details", {}),
+                    "message": booking_data.get("message", {}),
+                    "orchestration_id": booking_data.get("orchestration_id", "ORCH_001"),
+                    "priority": booking_data.get("priority", "normal")
+                }
+            }
+            
+            # Send to notification agent
+            result = await self._send_a2a_task("notification_agent", "SendHotelBookingNotification", notification_payload)
+            
+            logger.info(f"✅ Hotel booking notification sent for booking {booking_data.get('booking_id')}")
+            return {"status": "success", "message": "Hotel booking notification sent", "result": result}
+            
+        except Exception as e:
+            logger.error(f"❌ Error sending hotel booking notification: {e}")
+            return {"status": "error", "message": str(e)}
+
+    async def send_flight_landed_notification(self, flight_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Send flight landed notification using the exact format specified"""
+        try:
+            logger.info(f"✈️ Sending flight landed notification for {flight_data.get('booking_id')}")
+            
+            # Use the exact format provided by the user
+            notification_payload = {
+                "jsonrpc": "2.0",
+                "id": flight_data.get("booking_id", "flight_landed_001"),
+                "method": "SendFlightLandedNotification",
+                "params": {
+                    "booking_id": flight_data.get("booking_id", "FLIGHT_LANDED_123"),
+                    "notification_type": flight_data.get("notification_type", "flight_landed"),
+                    "recipients": flight_data.get("recipients", []),
+                    "flight_details": flight_data.get("flight_details", {}),
+                    "message": flight_data.get("message", {}),
+                    "orchestration_id": flight_data.get("orchestration_id", "ORCH_LANDED_001"),
+                    "priority": flight_data.get("priority", "normal")
+                }
+            }
+            
+            # Send to notification agent
+            result = await self._send_a2a_task("notification_agent", "SendFlightLandedNotification", notification_payload)
+            
+            logger.info(f"✅ Flight landed notification sent for booking {flight_data.get('booking_id')}")
+            return {"status": "success", "message": "Flight landed notification sent", "result": result}
+            
+        except Exception as e:
+            logger.error(f"❌ Error sending flight landed notification: {e}")
+            return {"status": "error", "message": str(e)}
+
+    async def send_hotel_shuttle_request(self, shuttle_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Send hotel shuttle request using the exact format specified"""
+        try:
+            logger.info(f"🚗 Sending hotel shuttle request for {shuttle_data.get('booking_id')}")
+            
+            # Use the exact format provided by the user
+            notification_payload = {
+                "jsonrpc": "2.0",
+                "id": shuttle_data.get("booking_id", "shuttle_001"),
+                "method": "SendHotelShuttleRequest",
+                "params": {
+                    "booking_id": shuttle_data.get("booking_id", "SHUTTLE_12345"),
+                    "notification_type": shuttle_data.get("notification_type", "shuttle_request"),
+                    "recipients": shuttle_data.get("recipients", []),
+                    "shuttle_details": shuttle_data.get("shuttle_details", {}),
+                    "message": shuttle_data.get("message", {}),
+                    "orchestration_id": shuttle_data.get("orchestration_id", "ORCH_003"),
+                    "priority": shuttle_data.get("priority", "normal")
+                }
+            }
+            
+            # Send to notification agent
+            result = await self._send_a2a_task("notification_agent", "SendHotelShuttleRequest", notification_payload)
+            
+            logger.info(f"✅ Hotel shuttle request sent for booking {shuttle_data.get('booking_id')}")
+            return {"status": "success", "message": "Hotel shuttle request sent", "result": result}
+            
+        except Exception as e:
+            logger.error(f"❌ Error sending hotel shuttle request: {e}")
+            return {"status": "error", "message": str(e)}
+
+    async def send_hospital_appointment_notification(self, appointment_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Send hospital appointment notification"""
+        try:
+            logger.info(f"🏥 Sending hospital appointment notification for {appointment_data.get('appointment_id')}")
+            
+            notification_payload = {
+                "jsonrpc": "2.0",
+                "id": appointment_data.get("appointment_id", "hospital_001"),
+                "method": "SendHospitalAppointmentNotification",
+                "params": {
+                    "appointment_id": appointment_data.get("appointment_id"),
+                    "notification_type": appointment_data.get("notification_type", "appointment_reminder"),
+                    "recipients": appointment_data.get("recipients", []),
+                    "appointment_details": appointment_data.get("appointment_details", {}),
+                    "hospital_details": appointment_data.get("hospital_details", {}),
+                    "orchestration_id": appointment_data.get("orchestration_id", "ORCH_001"),
+                    "priority": appointment_data.get("priority", "normal")
+                }
+            }
+            
+            result = await self._send_a2a_task("notification_agent", "SendHospitalAppointmentNotification", notification_payload)
+            
+            logger.info(f"✅ Hospital appointment notification sent for appointment {appointment_data.get('appointment_id')}")
+            return {"status": "success", "message": "Hospital appointment notification sent", "result": result}
+            
+        except Exception as e:
+            logger.error(f"❌ Error sending hospital appointment notification: {e}")
+            return {"status": "error", "message": str(e)}
+
+    async def send_stay_extension_notification(self, extension_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Send stay extension notification"""
+        try:
+            logger.info(f"📅 Sending stay extension notification for {extension_data.get('booking_id')}")
+            
+            notification_payload = {
+                "jsonrpc": "2.0",
+                "id": extension_data.get("booking_id", "extension_001"),
+                "method": "SendStayExtensionNotification",
+                "params": {
+                    "booking_id": extension_data.get("booking_id"),
+                    "notification_type": extension_data.get("notification_type", "stay_extended"),
+                    "recipients": extension_data.get("recipients", []),
+                    "extension_details": extension_data.get("extension_details", {}),
+                    "hotel_details": extension_data.get("hotel_details", {}),
+                    "orchestration_id": extension_data.get("orchestration_id", "ORCH_001"),
+                    "priority": extension_data.get("priority", "high")
+                }
+            }
+            
+            result = await self._send_a2a_task("notification_agent", "SendStayExtensionNotification", notification_payload)
+            
+            logger.info(f"✅ Stay extension notification sent for booking {extension_data.get('booking_id')}")
+            return {"status": "success", "message": "Stay extension notification sent", "result": result}
+            
+        except Exception as e:
+            logger.error(f"❌ Error sending stay extension notification: {e}")
+            return {"status": "error", "message": str(e)}
+
+    async def send_discharge_notification(self, discharge_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Send discharge notification"""
+        try:
+            logger.info(f"🏥 Sending discharge notification for {discharge_data.get('patient_id')}")
+            
+            notification_payload = {
+                "jsonrpc": "2.0",
+                "id": discharge_data.get("patient_id", "discharge_001"),
+                "method": "SendDischargeNotification",
+                "params": {
+                    "patient_id": discharge_data.get("patient_id"),
+                    "notification_type": discharge_data.get("notification_type", "discharge_ready"),
+                    "recipients": discharge_data.get("recipients", []),
+                    "discharge_details": discharge_data.get("discharge_details", {}),
+                    "hospital_details": discharge_data.get("hospital_details", {}),
+                    "transportation_details": discharge_data.get("transportation_details", {}),
+                    "orchestration_id": discharge_data.get("orchestration_id", "ORCH_001"),
+                    "priority": discharge_data.get("priority", "high")
+                }
+            }
+            
+            result = await self._send_a2a_task("notification_agent", "SendDischargeNotification", notification_payload)
+            
+            logger.info(f"✅ Discharge notification sent for patient {discharge_data.get('patient_id')}")
+            return {"status": "success", "message": "Discharge notification sent", "result": result}
+            
+        except Exception as e:
+            logger.error(f"❌ Error sending discharge notification: {e}")
+            return {"status": "error", "message": str(e)}
     
     async def check_flight_reminders(self, user_id: str) -> Dict[str, Any]:
         """Check if user needs flight reminders (7 hours before departure)"""
@@ -1331,6 +1516,77 @@ class GuardianOrchestrator:
         except Exception as e:
             logger.error(f"❌ Error triggering flight reminder: {e}")
     
+    async def get_flight_status(self, flight_number: str, departure_date: str = None, locale: str = "en-US", user_id: str = None) -> Dict[str, Any]:
+        """Get flight status by flight number - independent of users"""
+        try:
+            logger.info(f"✈️ Getting flight status for {flight_number}")
+            
+            # Call flight agent API with correct parameter format
+            payload = {
+                "jsonrpc": "2.0",
+                "method": "get_flight_status",
+                "params": {
+                    "flight_num": flight_number,
+                    "departure_date": departure_date or "2025-10-14",
+                    "locale": locale,
+                    "user_id": user_id or "optional_user_id"
+                },
+                "id": f"flight-status-{flight_number}"
+            }
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    self.agent_endpoints["flight_agent"],
+                    json=payload,
+                    timeout=10.0
+                )
+                
+                if response.status_code == 200:
+                    flight_data = response.json()
+                    if "result" in flight_data and flight_data["result"]:
+                        logger.info(f"✅ Flight {flight_number} status retrieved")
+                        return flight_data["result"]
+                    elif "error" in flight_data:
+                        logger.warning(f"⚠️ Flight API error for {flight_number}: {flight_data['error']}")
+                        return {"error": flight_data["error"].get("message", "Flight API error")}
+                    else:
+                        logger.warning(f"⚠️ Invalid flight API response for {flight_number}")
+                        return {"error": "Invalid flight API response"}
+                else:
+                    logger.error(f"❌ Flight API HTTP error for {flight_number}: {response.status_code}")
+                    return {"error": f"Flight API HTTP error: {response.status_code}"}
+                    
+        except Exception as e:
+            logger.error(f"❌ Flight status error for {flight_number}: {e}")
+            return {"error": str(e)}
+    
+    async def get_flight_status_for_user(self, user_id: str) -> Dict[str, Any]:
+        """Get flight status for a user by looking up their flight number"""
+        try:
+            user_bookings = self.orchestrator_db_service.get_user_bookings(user_id)
+            if not user_bookings:
+                return {"error": "No booking found for user"}
+            
+            booking = user_bookings[0]
+            flight_number = booking.get("flight_number")
+            
+            if not flight_number:
+                return {"error": "No flight number found in booking"}
+            
+            # Get flight status by flight number (independent of user)
+            flight_status = await self.get_flight_status(
+                flight_number=flight_number,
+                departure_date=booking.get("flight_date"),
+                locale="en-US",
+                user_id=user_id
+            )
+            
+            return flight_status
+                    
+        except Exception as e:
+            logger.error(f"❌ User flight status error: {e}")
+            return {"error": str(e)}
+
     async def _get_flight_status(self, flight: Dict[str, Any]) -> Dict[str, Any]:
         """Get flight status from flight agent"""
         try:
@@ -1623,16 +1879,16 @@ class GuardianOrchestrator:
     async def get_user_trip_status(self, user_id: str) -> Dict[str, Any]:
         """Get comprehensive trip status for user"""
         try:
-            user_bookings = dummy_db.get_user_bookings(user_id)
-            user_flights = dummy_db.get_user_flights(user_id)
-            user_location = dummy_db.get_user_location(user_id)
+            user_bookings = orchestrator_db_service.get_user_bookings(user_id)
+            user_flights = orchestrator_db_service.get_user_flights(user_id)
+            user_location = orchestrator_db_service.get_user_location(user_id)
             
             # Get orchestration status
             orchestration_id = f"ORCH_{user_id}"
             orchestration = dummy_db.data.get("orchestrations", {}).get(orchestration_id, {})
             
             # Get adaptive stay information
-            stay_info = self._get_adaptive_stay_info(user_bookings[0] if user_bookings else {})
+            stay_info = self._get_adaptive_stay_info(user_bookings[0] if user_bookings else None)
             
             return {
                 "user_id": user_id,
@@ -1649,7 +1905,7 @@ class GuardianOrchestrator:
             logger.error(f"❌ Error getting trip status: {e}")
             return {"status": "error", "message": str(e)}
     
-    def _get_adaptive_stay_info(self, booking: Dict[str, Any]) -> Dict[str, Any]:
+    def _get_adaptive_stay_info(self, booking: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         """Get adaptive stay information for the booking"""
         try:
             # Handle case when no booking is provided
@@ -1735,10 +1991,12 @@ class GuardianOrchestrator:
         try:
             logger.info(f"🏥 Processing stay extension for user {user_id}")
             
-            # Get current booking
-            booking = dummy_db.get_user_booking(user_id)
-            if not booking:
+            # Get current booking from database
+            user_bookings = orchestrator_db_service.get_user_bookings(user_id)
+            if not user_bookings:
                 return {"status": "error", "message": "No booking found"}
+            
+            booking = user_bookings[0]
             
             # Extract extension details
             new_discharge_date = extension_data.get("new_discharge_date")
@@ -1898,7 +2156,14 @@ class GuardianOrchestrator:
             logger.info("🔄 Checking daily treatment updates...")
             
             # Get all active patients
-            all_bookings = dummy_db.data.get("bookings", {})
+            # Get all active patients from database (this would need to be implemented)
+            # For now, use a subset of known demo patients
+            all_bookings = {}
+            demo_users = ["PAT-DEMO-001", "PAT-DEMO-002", "PAT-DEMO-003"]
+            for user_id in demo_users:
+                user_bookings = orchestrator_db_service.get_user_bookings(user_id)
+                if user_bookings:
+                    all_bookings[user_id] = user_bookings
             updates_found = 0
             
             for booking_id, booking in all_bookings.items():
