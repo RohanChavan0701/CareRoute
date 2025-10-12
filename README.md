@@ -31,7 +31,7 @@ Guardian automatically orchestrates:
 - ✈️ **Flight Monitoring** - Real-time flight status tracking and updates via external Flight Agent
 - 📞 **Voice Communication** - AI-powered voice calls with complete patient context via Voice Agent
 - 📱 **Family Notifications** - Automated updates to family members via email/SMS via Notification Agent
-- 🏥 **HIPAA-Compliant Database** - Secure patient data management with encryption 
+- 🏥 **Dummy Data Storage** - In-memory data storage for testing and development 
 - 🎯 **Multi-Agent Coordination** - Seamless integration with external services via JSON-RPC protocol
 
 ## 🏗️ System Architecture
@@ -45,7 +45,7 @@ Guardian automatically orchestrates:
    - Booking Agent: Handles initial booking processing
    - Scheduler Service: Manages task scheduling and workflows
    - Flight Tracker: Monitors flight status and updates
-3. **Database**: PostgreSQL for persistent data storage
+3. **Data Storage**: Dummy data storage for testing (in-memory)
 4. **External Agents**: Voice, Notification, and Flight agents via JSON-RPC 2.0
 
 ### Key Components
@@ -70,7 +70,7 @@ Guardian automatically orchestrates:
 - **Flight monitoring** and status tracking
 - **A2A protocol** communication with external agents
 - **HIPAA-compliant** database management
-- **Real-time notifications** via FCM
+- **Real-time notifications** via FCM (Future Sc)
 - **Background scheduling** for automated workflows
 
 ### External Agents (Active Repositories)
@@ -444,7 +444,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ### ✅ **Phase 1 - COMPLETED**
 - ✅ **Core orchestration engine** with multi-agent coordination via JSON-RPC
-- ✅ **Database storage** for testing 
+- ✅ **Dummy data storage** for testing (in-memory) 
 - ✅ **Real-time notifications** via external Notification Agent
 - ✅ **Voice integration** with complete patient context sharing via Voice Agent
 - ✅ **Production deployment** on AWS EC2 at `http://ec2-3-16-29-184.us-east-2.compute.amazonaws.com:8000`
