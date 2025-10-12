@@ -31,7 +31,7 @@ class GuardianOrchestrator:
         self.agent_endpoints = {
             "hotel_agent": os.getenv("HOTEL_AGENT_URL", "https://hotel-agent.aws.region.elb.amazonaws.com"),
             "hospital_agent": os.getenv("HOSPITAL_AGENT_URL", "https://hospital-agent.aws.region.elb.amazonaws.com"),
-            "voice_agent": os.getenv("VOICE_AGENT_URL", "https://voice-agent.aws.region.elb.amazonaws.com"),
+            "voice_agent": os.getenv("VOICE_AGENT_URL", "http://18.217.151.15:8000/jsonrpc"),
             "notification_agent": os.getenv("NOTIFICATION_AGENT_URL", "https://notification-system-h36d.onrender.com/a2a/tasks"),
             "flight_agent": os.getenv("FLIGHT_AGENT_URL", "http://54.158.27.0:8001/a2a"),
             "accessibility_agent": os.getenv("ACCESSIBILITY_AGENT_URL", "https://accessibility-agent.aws.region.elb.amazonaws.com"),
@@ -448,8 +448,8 @@ class GuardianOrchestrator:
             # Make real HTTP requests to external agents
             async with httpx.AsyncClient() as client:
                 try:
-                    # For flight agent, use the /a2a endpoint directly
-                    if agent_id == "flight_agent":
+                    # For flight agent and voice agent, use the endpoint directly
+                    if agent_id in ["flight_agent", "voice_agent"]:
                         response = await client.post(agent_url, json=a2a_request, timeout=10.0)
                     else:
                         # For other agents, use the /a2a/tasks endpoint
@@ -921,21 +921,21 @@ class GuardianOrchestrator:
                 "params": {
                     "patient_name": booking.get("patient_name", "Guest User"),
                     "patient_id": booking.get("user_id", user_id),
-                    "patient_language": booking.get("preferred_language", "English"),
+                    "patient_language": booking.get("patient_language", "English"),
                     "patient_contact": booking.get("emergency_contacts", [""])[0] if booking.get("emergency_contacts") else "",
                     "patient_dob": booking.get("date_of_birth", "Not specified"),
                     "companion_name": booking.get("companion_name", "Not specified"),
-                    "check_in_date": booking.get("hotel_check_in", "").replace("T", " ").split(".")[0] if booking.get("hotel_check_in") else "",
-                    "check_out_date": booking.get("new_discharge_date", "").replace("T", " ").split(".")[0] if booking.get("new_discharge_date") else "",
+                "check_in_date": booking.get("hotel_check_in", "").replace("T", " ").split(".")[0][:16] if booking.get("hotel_check_in") else "",
+                "check_out_date": booking.get("hotel_check_out", "").replace("T", " ").split(".")[0][:16] if booking.get("hotel_check_out") else "",
                     "hotel_name": booking.get("hotel_name", "Denver Accessible Suites"),
                     "hotel_room_number": booking.get("hotel_room_number", "Suite 205"),
                     "shuttle_driver": booking.get("shuttle_driver", "Not assigned"),
                     "hospital_name": booking.get("hospital_name", "Denver Medical Center"),
                     "doctor_name": booking.get("doctor_name", "Dr. Smith"),
                     "appointment_date": booking.get("hospital_appointment_time", "").split("T")[0] if booking.get("hospital_appointment_time") else "",
-                    "appointment_time": booking.get("hospital_appointment_time", "").split("T")[1][:5] + " AM" if booking.get("hospital_appointment_time") else "",
-                    "pickup_time": booking.get("pickup_time", "Not scheduled"),
-                    "discharge_date": booking.get("new_discharge_date", "").replace("T", " ").split(".")[0] if booking.get("new_discharge_date") else "",
+                "appointment_time": booking.get("hospital_appointment_time", "").split("T")[1][:5] + " AM" if booking.get("hospital_appointment_time") else "",
+                "pickup_time": booking.get("pickup_time", "").replace("T", " ").split(".")[0][:16] if booking.get("pickup_time") else "",
+                "discharge_date": booking.get("new_discharge_date", "").replace("T", " ").split(".")[0][:16] + " AM" if booking.get("new_discharge_date") else "",
                     "discharge_status": booking.get("discharge_status", "Pending")
                 },
                 "id": f"orchestrator-request-{user_id}"
@@ -1515,7 +1515,7 @@ class GuardianOrchestrator:
                 # Voice Agent Template Variables (Required)
                 "patient_name": booking.get("patient_name"),
                 "patient_id": booking.get("user_id", user_id),
-                "patient_language": booking.get("preferred_language", "English"),
+                "patient_language": booking.get("patient_language", "English"),
                 "patient_contact": booking.get("emergency_contacts", [""])[0] if booking.get("emergency_contacts") else "",
                 "companion_name": booking.get("companion_name", "Not specified"),
                 "check_in_date": booking.get("hotel_check_in", "").split("T")[0] if booking.get("hotel_check_in") else "",

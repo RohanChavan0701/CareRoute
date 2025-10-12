@@ -1,0 +1,92 @@
+{
+  "bookings": {
+    "PAT-12345": [
+      {
+        "booking_id": "BOOK_PAT-12345_1760238460",
+        "user_id": "PAT-12345",
+        "patient_name": "Rohan Chavan",
+        "patient_email": "rohan.chavan@example.com",
+        "date_of_birth": "1985-03-15",
+        "preferred_language": "Hindi",
+        "emergency_contacts": [
+          "+1-540-558-5805"
+        ],
+        "companion_name": "Jane Doe",
+        "medical_conditions": [
+          "Diabetes",
+          "Hypertension"
+        ],
+        "special_requirements": [
+          "Wheelchair accessible",
+          "Hindi speaking staff"
+        ],
+        "flight_number": "AI101",
+        "flight_date": "2025-10-14T08:00:00",
+        "departure_airport": "DEL",
+        "arrival_airport": "DEN",
+        "hotel_name": "JW Marriott Hotel",
+        "hotel_room_number": "Room 205",
+        "hotel_check_in": "2025-10-14T14:00:00",
+        "hotel_check_out": "2025-10-18T11:00:00",
+        "hotel_booking_reference": "MAR-12345",
+        "shuttle_driver": "Ahmed Hassan",
+        "hospital_name": "Apollo Medical Center",
+        "doctor_name": "Dr. Meera Singh",
+        "hospital_appointment_time": "2025-10-15T09:30:00",
+        "hospital_appointment_id": "APT-789",
+        "expected_discharge_date": "2025-10-17T11:00:00",
+        "new_discharge_date": "2025-10-17T11:00:00",
+        "discharge_status": "Pending",
+        "pickup_time": "2025-10-14T13:45:00",
+        "created_at": "2025-10-11T23:07:40.689259",
+        "updated_at": "2025-10-11T23:07:40.689262"
+      }
+    ],
+    "PAT-INDIA-001": [
+      {
+        "booking_id": "BOOK_PAT-INDIA-001_1760237751",
+        "user_id": "PAT-INDIA-001",
+        "patient_name": "Rajesh Kumar Sharma",
+        "patient_email": "rajesh.sharma@example.com",
+        "date_of_birth": "1978-07-22",
+        "preferred_language": "Hindi",
+        "emergency_contacts": [
+          "+91-98765-43210"
+        ],
+        "companion_name": "Priya Sharma",
+        "medical_conditions": [
+          "Diabetes",
+          "Hypertension"
+        ],
+        "special_requirements": [
+          "Wheelchair accessible",
+          "Hindi speaking staff"
+        ],
+        "flight_number": "AI101",
+        "flight_date": "2025-10-14T08:00:00",
+        "departure_airport": "DEL",
+        "arrival_airport": "DEN",
+        "hotel_name": "JW Marriott Juhu",
+        "hotel_room_number": "Suite 308",
+        "hotel_check_in": "2025-10-14T14:00:00",
+        "hotel_check_out": "2025-10-18T11:00:00",
+        "hotel_booking_reference": "TAJ-56789",
+        "shuttle_driver": "Vikram Singh",
+        "hospital_name": "Apollo Medical Center",
+        "doctor_name": "Dr. Anil Kumar",
+        "hospital_appointment_time": "2025-10-15T09:30:00",
+        "hospital_appointment_id": "APT-789",
+        "expected_discharge_date": "2025-10-17T11:00:00",
+        "new_discharge_date": "2025-10-17T11:00:00",
+        "discharge_status": "Pending",
+        "pickup_time": "2025-10-14T13:45:00",
+        "created_at": "2025-10-11T22:55:51.113901",
+        "updated_at": "2025-10-11T22:55:51.113904"
+      }
+    ]
+  },
+  "flights": {},
+  "users": {},
+  "locations": {},
+  "orchestrations": {}
+}

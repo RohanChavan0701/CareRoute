@@ -148,11 +148,9 @@ async def handle_message(message: SimpleMessage):
             # Send context to voice agent
             voice_result = await guardian_orchestrator._send_a2a_task(
                 "voice_agent", 
-                "initiate_call_with_context",
+                "configure_patient_call",
                 {
-                    "user_id": user_id,
-                    "context": patient_context,
-                    "call_reason": "user_requested_support"
+                    "params": patient_context["params"]  # Extract just the params from the JSON-RPC structure
                 }
             )
             
@@ -188,11 +186,9 @@ async def trigger_voice_call(request: SimpleMessage):
         # Send context to voice agent
         voice_result = await guardian_orchestrator._send_a2a_task(
             "voice_agent", 
-            "initiate_call_with_context",
+            "configure_patient_call",
             {
-                "user_id": request.user_id,
-                "context": patient_context,
-                "call_reason": "user_requested_support"
+                "params": patient_context["params"]  # Extract just the params from the JSON-RPC structure
             }
         )
         
