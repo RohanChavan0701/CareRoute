@@ -36,6 +36,78 @@ class OrchestratorDatabaseService:
             self._repository = create_repository(self._get_session())
         return self._repository
     
+    async def create_booking(self, user_id: str, booking_data: Dict[str, Any]) -> str:
+        """Create a new booking in the database"""
+        try:
+            # Generate booking ID
+            booking_id = f"BOOK_{user_id}_{int(datetime.now().timestamp())}"
+            
+            # Create patient if doesn't exist
+            patient_data = {
+                "patient_id": user_id,
+                "first_name": booking_data.get("patient_name", "").split()[0] if booking_data.get("patient_name") else "",
+                "last_name": " ".join(booking_data.get("patient_name", "").split()[1:]) if booking_data.get("patient_name") and len(booking_data.get("patient_name", "").split()) > 1 else "",
+                "date_of_birth": "1990-01-01",  # Default date
+                "patient_language": booking_data.get("preferred_language", "English"),
+                "emergency_contact": booking_data.get("emergency_contact", {}).get("phone", ""),
+                "email": booking_data.get("patient_email", ""),
+                "medical_conditions_encrypted": "",
+                "special_requirements_encrypted": "",
+                "companion_name": booking_data.get("emergency_contact", {}).get("name", "")
+            }
+            
+            # Create or get patient
+            patient = self._get_repository().create_patient(patient_data, 'orchestrator_service')
+            
+            # Create booking
+            booking_record = {
+                "booking_id": booking_id,
+                "travel_date": booking_data.get("travel_date", datetime.now().isoformat()),
+                "return_date": booking_data.get("return_date", datetime.now().isoformat()),
+                "flight_number": booking_data.get("flight_number", ""),
+                "departure_airport": booking_data.get("departure_airport", ""),
+                "arrival_airport": booking_data.get("arrival_airport", ""),
+                "hotel_name": booking_data.get("hotel_name", ""),
+                "hospital_name": booking_data.get("hospital_name", ""),
+                "doctor_name": booking_data.get("doctor_name", ""),
+                "appointment_time": booking_data.get("appointment_time"),
+                "expected_discharge_date": booking_data.get("return_date", datetime.now().isoformat()),
+                "booking_status": "Confirmed"
+            }
+            
+            booking = self._get_repository().create_booking(booking_record, patient.id, 'orchestrator_service')
+            logger.info(f"✅ Created booking {booking_id} for user {user_id}")
+            return booking_id
+            
+        except Exception as e:
+            logger.error(f"❌ Error creating booking: {e}")
+            raise
+    
+    async def create_flight_status(self, user_id: str, flight_data: Dict[str, Any]) -> str:
+        """Create flight status record"""
+        try:
+            flight_id = f"FLIGHT_{user_id}_{int(datetime.now().timestamp())}"
+            
+            flight_record = {
+                "flight_id": flight_id,
+                "flight_number": flight_data.get("flight_number", ""),
+                "status": "scheduled",
+                "gate": "TBD",
+                "terminal": "TBD",
+                "departure_time": flight_data.get("departure_time", datetime.now().isoformat()),
+                "estimated_arrival": flight_data.get("estimated_arrival", ""),
+                "recorded_at": datetime.now().isoformat(),
+                "source": "orchestrator"
+            }
+            
+            flight_status = self._get_repository().create_flight_status(flight_record, 'orchestrator_service')
+            logger.info(f"✅ Created flight status {flight_id} for user {user_id}")
+            return flight_id
+            
+        except Exception as e:
+            logger.error(f"❌ Error creating flight status: {e}")
+            raise
+
     def get_user_bookings(self, user_id: str) -> List[Dict[str, Any]]:
         """Get user bookings from database"""
         try:

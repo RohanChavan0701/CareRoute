@@ -19,7 +19,7 @@ services:
       - HOTEL_AGENT_URL=${HOTEL_AGENT_URL:-https://hotel-agent.aws.region.elb.amazonaws.com}
       - HOSPITAL_AGENT_URL=${HOSPITAL_AGENT_URL:-https://hospital-agent.aws.region.elb.amazonaws.com}
       - VOICE_AGENT_URL=${VOICE_AGENT_URL:-http://18.217.151.15:8000/jsonrpc}
-      - NOTIFICATION_AGENT_URL=${NOTIFICATION_AGENT_URL:-https://notification-system-h36d.onrender.com}
+      - NOTIFICATION_AGENT_URL=${NOTIFICATION_AGENT_URL:-http://3.143.225.130:8000}
       - FLIGHT_AGENT_URL=${FLIGHT_AGENT_URL:-http://54.158.27.0:8001/a2a}
       
       # LLM Integration (Optional)

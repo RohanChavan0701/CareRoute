@@ -297,6 +297,63 @@ async def send_boarding_reminder(request: dict):
         logger.error(f"❌ Failed to send boarding reminder: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/flight/status")
+async def get_flight_status(request: dict):
+    """Get flight status by flight number"""
+    try:
+        flight_number = request.get("flight_number")
+        departure_date = request.get("departure_date")
+        locale = request.get("locale", "en-US")
+        
+        if not flight_number:
+            raise HTTPException(status_code=400, detail="flight_number is required")
+        
+        flight_status = await guardian_orchestrator.get_flight_status(
+            flight_number=flight_number,
+            departure_date=departure_date,
+            locale=locale
+        )
+        
+        return {
+            "status": "success",
+            "flight_number": flight_number,
+            "flight_status": flight_status
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get flight status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/notifications/hotel-booking")
+async def send_hotel_booking_notification(request: dict):
+    """Send hotel booking notification"""
+    try:
+        result = await guardian_orchestrator.send_hotel_booking_notification(request)
+        return result
+    except Exception as e:
+        logger.error(f"❌ Failed to send hotel booking notification: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/notifications/flight-landed")
+async def send_flight_landed_notification(request: dict):
+    """Send flight landed notification"""
+    try:
+        result = await guardian_orchestrator.send_flight_landed_notification(request)
+        return result
+    except Exception as e:
+        logger.error(f"❌ Failed to send flight landed notification: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/notifications/hotel-shuttle")
+async def send_hotel_shuttle_request(request: dict):
+    """Send hotel shuttle request notification"""
+    try:
+        result = await guardian_orchestrator.send_hotel_shuttle_request(request)
+        return result
+    except Exception as e:
+        logger.error(f"❌ Failed to send hotel shuttle request: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/fcm/send-flight-update")
 async def send_flight_update(request: dict):
     """Send flight status update notification"""
@@ -367,21 +424,74 @@ async def send_appointment_reminder(request: dict):
 async def create_booking(booking_data: dict):
     """Create a new booking and start orchestration"""
     try:
-        user_id = booking_data.get("user_id")
+        # Extract required fields from your BookingRequest format
+        user_id = booking_data.get("userId")
+        booking_id = booking_data.get("bookingId") 
+        patient_id = booking_data.get("patientId")
+        
         if not user_id:
-            raise HTTPException(status_code=400, detail="user_id is required")
+            raise HTTPException(status_code=400, detail="userId is required")
+        
+        # Map your frontend format to orchestrator format
+        orchestrator_data = {
+            "user_id": user_id,
+            "patient_id": patient_id or user_id,
+            "booking_id": booking_id,
+            "patient_name": booking_data.get("patientName"),
+            "first_name": booking_data.get("firstName"),
+            "last_name": booking_data.get("lastName"),
+            "date_of_birth": booking_data.get("dateOfBirth"),
+            "patient_language": booking_data.get("patientLanguage"),
+            "age": booking_data.get("age"),
+            "email": booking_data.get("email"),
+            "emergency_contact": booking_data.get("emergencyContact"),
+            "medical_conditions": booking_data.get("medicalConditions", []),
+            "special_requirements": booking_data.get("specialRequirements"),
+            "companion_name": booking_data.get("companionName"),
+            
+            # Flight info
+            "flight_number": booking_data.get("flightNumber"),
+            "flight_date": booking_data.get("flightDate"),
+            "flight_time": booking_data.get("flightTime"),
+            "departure_airport": booking_data.get("departureAirport"),
+            "arrival_airport": booking_data.get("arrivalAirport"),
+            
+            # Hotel info
+            "hotel_name": booking_data.get("hotelName"),
+            "hotel_booking_reference": booking_data.get("hotelBookingReference"),
+            "hotel_check_in": booking_data.get("hotelCheckIn"),
+            "hotel_check_out": booking_data.get("hotelCheckOut"),
+            "hotel_room_number": booking_data.get("hotelRoomNumber"),
+            
+            # Hospital info
+            "hospital_name": booking_data.get("hospitalName"),
+            "doctor_name": booking_data.get("doctorName"),
+            "appointment_date": booking_data.get("appointmentDate"),
+            "appointment_time": booking_data.get("appointmentTime"),
+            "appointment_id": booking_data.get("appointmentId"),
+            
+            # Travel dates
+            "travel_date": booking_data.get("travelDate"),
+            "return_date": booking_data.get("returnDate"),
+            "expected_discharge_date": booking_data.get("expectedDischargeDate"),
+            "discharge_status": booking_data.get("dischargeStatus"),
+            
+            # Transportation
+            "pickup_time": booking_data.get("pickupTime"),
+            "shuttle_driver": booking_data.get("shuttleDriver")
+        }
         
         # Start orchestration with booking data
-        orchestration_id = await guardian_orchestrator.start_orchestration(booking_data)
+        orchestration_id = await guardian_orchestrator.start_orchestration(orchestrator_data)
         
-        # Handle booking creation (send notifications, etc.)
-        result = await guardian_orchestrator.handle_booking_creation(user_id, booking_data)
+        # Handle booking creation (send notifications, etc.) - bypass database for now
+        result = await guardian_orchestrator.handle_booking_creation(user_id, orchestrator_data)
         
         return {
             "status": "success",
             "message": "Booking created and orchestration started",
             "orchestration_id": orchestration_id,
-            "booking_id": booking_data.get("booking_id"),
+            "booking_id": booking_id,
             "user_id": user_id,
             "result": result
         }

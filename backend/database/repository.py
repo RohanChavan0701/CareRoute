@@ -97,7 +97,7 @@ class HIPAACompliantRepository:
         """
         try:
             patient = self.db_session.query(Patient).filter(
-                Patient.patient_id == patient_id,
+                Patient.patient_id == str(patient_id),
                 Patient.is_active == True
             ).first()
             
