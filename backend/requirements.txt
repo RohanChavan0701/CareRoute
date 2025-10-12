@@ -7,7 +7,15 @@ openai>=1.0.0
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 pydantic>=2.0.0
-# AG-UI Protocol support
-ag-ui-sdk>=0.1.0
+# Removed AG-UI Protocol SDK - using simple REST API instead
+
+# HIPAA-Compliant Database
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0  # PostgreSQL driver
+alembic>=1.12.0  # Database migrations
+
 # Scheduler
 apscheduler>=3.10.0
+
+# FCM for push notifications
+firebase-admin>=6.0.0

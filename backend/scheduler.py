@@ -10,8 +10,8 @@ from typing import Dict, List
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.cron import CronTrigger
-from dummy_data import dummy_db
-from orchestrator import guardian_orchestrator
+from .dummy_data import dummy_db
+from .orchestrator import guardian_orchestrator
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

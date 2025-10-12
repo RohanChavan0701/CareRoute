@@ -42,6 +42,55 @@ class DummyDatabase:
         except Exception as e:
             logger.error(f"Error saving data: {e}")
     
+    def create_sample_booking(self, user_id: str = "PAT-12345") -> str:
+        """Create sample booking data for testing voice agent"""
+        sample_booking = {
+            "booking_id": f"BOOK_{user_id}_{int(datetime.now().timestamp())}",
+            "user_id": user_id,
+            "patient_name": "Marie Dubois",
+            "patient_email": "marie.dubois@example.com",
+            "date_of_birth": "1985-03-15",
+            "patient_language": "French",
+            "emergency_contacts": ["+33-123-456-789"],
+            "companion_name": "Jean Dubois",
+            "medical_conditions": ["Diabetes", "Hypertension"],
+            "special_requirements": ["Wheelchair accessible", "French speaking staff"],
+            
+            # Flight details
+            "flight_number": "AI101",
+            "flight_date": "2025-10-14T08:00:00",
+            "departure_airport": "CDG",
+            "arrival_airport": "DEN",
+            
+            # Hotel details
+            "hotel_name": "JW Marriott Hotel",
+            "hotel_room_number": "Room 205",
+            "hotel_check_in": "2025-10-14T14:00:00",
+            "hotel_check_out": "2025-10-18T11:00:00",
+            "hotel_booking_reference": "MAR-12345",
+            "shuttle_driver": "Ahmed Hassan",
+            
+            # Hospital details
+            "hospital_name": "Apollo Medical Center",
+            "doctor_name": "Dr. Meera Singh",
+            "hospital_appointment_time": "2025-10-15T09:30:00",
+            "hospital_appointment_id": "APT-789",
+            
+            # Discharge details
+            "expected_discharge_date": "2025-10-17T11:00:00",
+            "new_discharge_date": "2025-10-17T11:00:00",
+            "discharge_status": "Pending",
+            "pickup_time": "2025-10-14T13:45:00",
+            
+            "created_at": datetime.now().isoformat(),
+            "updated_at": datetime.now().isoformat()
+        }
+        
+        self.data["bookings"][user_id] = [sample_booking]
+        self._save_data()
+        logger.info(f"✅ Created sample booking for user {user_id}")
+        return sample_booking["booking_id"]
+    
     def create_booking(self, user_id: str, booking_data: Dict) -> str:
         """Create a new booking"""
         booking_id = f"BOOK_{user_id}_{int(datetime.now().timestamp())}"
@@ -100,6 +149,11 @@ class DummyDatabase:
     
     def get_user_bookings(self, user_id: str) -> List[Dict]:
         """Get all bookings for a user"""
+        # Check if user has bookings stored directly by user_id
+        if user_id in self.data["bookings"]:
+            return self.data["bookings"][user_id]
+        
+        # Fallback to the old method for backward compatibility
         user_bookings = []
         if user_id in self.data["users"]:
             for booking_id in self.data["users"][user_id]["bookings"]:

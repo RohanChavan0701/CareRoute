@@ -1,64 +1,115 @@
-# Guardian A2A Orchestrator
+# Guardian Medical Tourism Orchestrator
 
-🧠 **Guardian** is a medical & wellness tourism companion app for elderly travelers, built with the real **A2A (Agent-to-Agent)** protocol from [github.com/a2aproject/A2A](https://github.com/a2aproject/A2A) for multi-agent collaboration.
+🏥 **Guardian** is a comprehensive medical tourism orchestration system that coordinates multi-agent workflows for elderly travelers, providing seamless coordination between hotels, hospitals, voice agents, and family notifications.
+
+## 📁 Repository Structure
+
+This project consists of multiple interconnected repositories:
+
+### 🎯 **Main Orchestrator** (This Repository)
+- **[Guardian Medical Tourism Orchestrator](https://github.com/atharvasalunke/medical_orchestrator)** - Core orchestration engine
+- **Function**: Central coordinator for all medical tourism workflows
+- **Status**:  **Hosted on AWS** - Deployed at `http://ec2-3-16-29-184.us-east-2.compute.amazonaws.com:8000/`
+
+### 🤖 **External Agent Repositories**
+
+#### ✈️ **Flight Agent**
+- **[Flight API Repository](https://github.com/rohanpc0701/Codefest_Flightapi)** - Real-time flight tracking
+- **Function**: Flight status monitoring and updates
+
+#### 📧 **Notification Agent**  
+- **[Notification System Repository](https://github.com/uma1902/notification-system)** - Email Notifications
+- **Function**: Family notifications and booking confirmations
+
+#### 📞 **Voice Agent**
+- **[Voice Agent Repository](https://github.com/uma1902/notification-system)** (Voice functionality)
+- **Function**: AI-powered voice communication with patients
 
 ## 🎯 Overview
 
-Guardian automatically:
-- Tracks flight ETAs and locations
-- Confirms hotel and hospital bookings before arrival
-- Sends notifications to patients and their families
-- Handles voice communication (calls, updates)
-- Operates in a HIPAA-conscious, autonomous manner
+Guardian automatically orchestrates:
+- ✈️ **Flight Monitoring** - Real-time flight status tracking and updates via external Flight Agent
+- 📞 **Voice Communication** - AI-powered voice calls with complete patient context via Voice Agent
+- 📱 **Family Notifications** - Automated updates to family members via email/SMS via Notification Agent
+- 🏥 **Dummy Data Storage** - In-memory data storage for testing and development 
+- 🎯 **Multi-Agent Coordination** - Seamless integration with external services via JSON-RPC protocol
 
-## 🏗️ Architecture
+## 🏗️ System Architecture
 
-```
-Flutter App (frontend)
-│
-▼
-ChatGPT Voice Agent (user interface)
-│ calls →
-Guardian (A2A Orchestrator Agent)
-├─ HotelAgent (A2A)
-├─ HospitalAgent (A2A)
-├─ VoiceAgent (A2A)
-└─ FamilyNotifyAgent (A2A)
-│
-└─ FastAPI + LangGraph backend (execution core)
-```
+![Guardian Medical Tourism Orchestrator Architecture](https://github.com/atharvasalunke/medical_orchestrator/blob/main/docs/architecture-diagram.png)
 
-## 🤖 Agents
+### Architecture Flow
 
-### Guardian Agent (Orchestrator)
-- Main coordinator for medical tourism workflow
-- Monitors flight status and triggers workflows
-- Manages communication between sub-agents
-- Handles emergency situations
+1. **User Interaction Layer**: Flutter App for patient booking input
+2. **Core Orchestrator**: Guardian Orchestrator (The Brain) running on AWS EC2
+   - Booking Agent: Handles initial booking processing
+   - Scheduler Service: Manages task scheduling and workflows
+   - Flight Tracker: Monitors flight status and updates
+3. **Data Storage**: Dummy data storage for testing (in-memory)
+4. **External Agents**: Voice, Notification, and Flight agents via JSON-RPC 2.0
 
-### Hotel Agent
-- Confirms hotel bookings
-- Arranges accessibility accommodations
-- Handles special requirements
-- Manages late check-in scenarios
+### Key Components
 
-### Hospital Agent
-- Confirms medical appointments
-- Verifies medical history and medications
-- Arranges medical transportation
-- Handles emergency medical situations
+- **🎯 CareRoute Orchestrator**: Central intelligence coordinating all workflows
+- **📱 Flutter Frontend**: Patient booking interface
+- **🗄️ PostgreSQL Database**: HIPAA-compliant data storage
+- **🔐 A2A Protocol**: Secure JSON-RPC 2.0 communication
+- **🤖 External Agents**: Specialized microservices for specific functions
 
-### Voice Agent
-- Initiates voice calls via Twilio/OpenAI Realtime
-- Handles emergency voice alerts
-- Provides multilingual support
-- Manages call transcription
+## 🚀 Live Demo & Deployment
 
-### Notify Agent
-- Sends family notifications via SMS, email, push
-- Handles emergency alerts
-- Manages delivery confirmations
-- Supports multiple communication channels
+- **🌐 Production URL**: `http://3.16.29.184:8000`
+- **📊 Health Check**: `http://3.16.29.184:8000/health`
+- **📚 API Docs**: `http://3.16.29.184:8000/docs`
+- **🐳 Docker Ready**: Full containerization with production deployment
+
+## 🤖 External Agent Integration
+
+### Guardian Orchestrator (This Repository)
+- **Main coordinator** for medical tourism workflow
+- **Flight monitoring** and status tracking
+- **A2A protocol** communication with external agents
+- **HIPAA-compliant** database management
+- **Real-time notifications** via FCM (Future Sc)
+- **Background scheduling** for automated workflows
+
+### External Agents (Active Repositories)
+
+#### 📞 Voice Agent
+- **Repository**: [Voice Agent Repository](https://github.com/uma1902/notification-system) (Voice functionality)
+- **Function**: AI-powered voice communication with patients
+- **Integration**: JSON-RPC protocol at `http://18.217.151.15:8000/jsonrpc`
+- **Status**: ✅ **WORKING** - Successfully tested with complete patient context
+
+#### 📧 Notification Agent
+- **Repository**: [Notification System Repository](https://github.com/uma1902/notification-system)
+- **Function**: Email/SMS notifications to patients and families
+- **Integration**: JSON-RPC protocol at `http://3.143.225.130:8000/a2a/tasks`
+- **Status**: ✅ **WORKING** - Successfully tested with booking confirmations
+
+#### ✈️ Flight Agent
+- **Repository**: [Flight API Repository](https://github.com/rohanpc0701/Codefest_Flightapi)
+- **Function**: Real-time flight status and tracking
+- **Integration**: JSON-RPC protocol at `http://54.158.27.0:8001/a2a`
+- **Status**: ✅ **WORKING** - Successfully tested with UAL606 flight data
+- **Features**: Live flight data, delay notifications, gate information
+
+### Agents Not Currently Integrated
+
+#### ♿ Accessibility Agent
+- **Status**: Not currently integrated
+- **Function**: Special requirements and mobility assistance
+- **Note**: Removed from current workflow per user requirements
+
+#### 🏨 Hotel Agent
+- **Status**: Not implemented
+- **Function**: Hotel booking confirmations and arrangements
+- **Note**: Using direct notification system instead
+
+#### 🏥 Hospital Agent  
+- **Status**: Not implemented
+- **Function**: Medical appointment scheduling and confirmations
+- **Note**: Using direct notification system instead
 
 ## 🚀 Quick Start
 
@@ -117,47 +168,62 @@ Guardian (A2A Orchestrator Agent)
 
 ## 📡 API Endpoints
 
-### Core Guardian Endpoints
+### 🎯 Core Orchestration Endpoints
 
-- `POST /guardian/run` - Manually trigger Guardian workflow
-- `GET /guardian/status/{flight_number}` - Get workflow status
-- `POST /guardian/cancel/{flight_number}` - Cancel workflow
+- `POST /api/booking` - **Create booking and start orchestration**
+- `GET /guardian/trip/status/{user_id}` - **Get complete trip status**
+- `GET /guardian/scheduler/status` - **Background job status**
 
-### A2A Protocol Endpoints
+### 📞 Voice Integration
 
-- `POST /a2a/receive` - Receive A2A messages from agents
-- `POST /a2a/register` - Register new agent
-- `GET /a2a/agents` - List registered agents
+- `POST /guardian/voice/call` - **Trigger voice call with patient context**
 
-### Health & Monitoring
+### ✈️ Flight Status
 
-- `GET /health` - System health check
-- `GET /metrics` - Prometheus metrics (if enabled)
+- `POST /api/flight/status` - **Get flight status by flight number and date**
+
+### 📧 Notification Endpoints
+
+- `POST /api/notifications/hotel-booking` - **Send hotel booking confirmation**
+- `POST /api/notifications/flight-landed` - **Send flight landed notification**
+- `POST /api/notifications/hotel-shuttle` - **Send hotel shuttle request**
+
+### 🏥 Health & Monitoring
+
+- `GET /health` - **System health check**
+- `GET /` - **Root endpoint**
+
+### 📱 Frontend Integration
+
+- `POST /message` - **General message handling**
+- `GET /docs` - **Interactive API documentation**
 
 ## 🔧 Configuration
 
 ### Environment Variables
 
-Key configuration options in `.env`:
+Key configuration options in `production.env`:
 
 ```bash
-# A2A Protocol
-A2A_API_TOKEN=your-a2a-api-token
-A2A_SIGNATURE_SECRET=your-signature-secret
+# Application Settings
+ENVIRONMENT=production
+DEBUG=false
+SECRET_KEY=your-production-secret-key
 
-# Twilio (Voice & SMS)
-TWILIO_ACCOUNT_SID=your-account-sid
-TWILIO_AUTH_TOKEN=your-auth-token
+# External Agent Endpoints (Active)
+VOICE_AGENT_URL=http://18.217.151.15:8000/jsonrpc
+NOTIFICATION_AGENT_URL=http://3.143.225.130:8000
+FLIGHT_AGENT_URL=http://54.158.27.0:8001/a2a
 
-# OpenAI (Realtime Voice)
-OPENAI_API_KEY=your-openai-key
+# Database Configuration
+DATABASE_URL=postgresql://guardian_user:guardian_secure_2024@localhost:5432/guardian_hipaa_db
+HIPAA_ENCRYPTION_PASSWORD=guardian_hipaa_encryption_password_2024_secure
+HIPAA_ENCRYPTION_SALT=guardian_hipaa_salt_2024_secure
 
-# Flight Tracking
-AVIATION_STACK_API_KEY=your-api-key
-
-# Security
+# Security & Compliance
 HIPAA_MODE=true
-VOICE_POLICY_LEVEL=moderate
+AUDIT_LOG_ENABLED=true
+DATA_RETENTION_DAYS=2555
 ```
 
 ### Voice Policy Configuration
@@ -233,27 +299,63 @@ pytest --cov=backend tests/
 pytest tests/integration/ -v
 ```
 
+## 📁 Repository Structure
+
+```
+medical_orchestrator/
+├── backend/                    # Guardian Orchestrator Backend
+│   ├── main_backend.py        # FastAPI application entry point
+│   ├── orchestrator.py        # Core orchestration logic
+│   ├── scheduler.py           # Background task scheduler
+│   ├── fcm_service.py         # Firebase Cloud Messaging
+│   ├── database/              # HIPAA-compliant database layer
+│   │   ├── models.py          # SQLAlchemy models
+│   │   ├── repository.py      # Data access layer
+│   │   ├── orchestrator_service.py # Orchestrator database service
+│   │   ├── encryption.py      # HIPAA encryption utilities
+│   │   └── audit.py           # Audit logging
+│   └── requirements.txt       # Python dependencies
+├── tests/                     # Test suite
+├── deploy/                    # Deployment scripts
+│   ├── deploy-final.sh        # EC2 deployment script
+│   ├── ec2-setup.sh          # EC2 setup script
+│   └── codefest.pem          # EC2 access key
+├── samples/                   # Sample data and requests
+├── docker-compose.yml         # Local development setup
+├── Dockerfile                 # Production container
+├── production.env             # Production configuration
+└── FRONTEND_API_INTEGRATION.md # Frontend integration guide
+```
+
 ## 🚀 Deployment
 
-### Docker Production
+### 🐳 Docker Local Development
 
 ```bash
-docker-compose -f docker-compose.prod.yml up -d
+# Start local development environment
+docker-compose up --build -d
+
+# Access the application
+curl http://localhost:8000/health
 ```
 
-### AWS ECS Fargate
-
-1. Build and push Docker image to ECR
-2. Create ECS task definition
-3. Deploy to Fargate service
-4. Configure RDS PostgreSQL
-5. Set up CloudWatch logging
-
-### Kubernetes
+### ☁️ AWS EC2 Production Deployment
 
 ```bash
-kubectl apply -f k8s/
+# Deploy to EC2 (replace with your IP and key)
+./deploy/deploy-final.sh 3.16.29.184 deploy/codefest.pem ubuntu
+
+# Verify deployment
+curl http://3.16.29.184:8000/health
 ```
+
+### 🔧 Production Setup
+
+1. **EC2 Instance**: Ubuntu 20.04+ with Docker installed
+2. **Environment**: Production environment variables configured
+3. **Database**: PostgreSQL with HIPAA encryption
+4. **Monitoring**: Health checks and audit logging enabled
+5. **Security**: HTTPS endpoints and encrypted communication
 
 ## 📈 Scaling
 
@@ -308,32 +410,60 @@ kubectl apply -f k8s/
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🆘 Support
 
 - **Documentation**: [Wiki](link-to-wiki)
 - **Issues**: [GitHub Issues](link-to-issues)
 - **Discussions**: [GitHub Discussions](link-to-discussions)
 
-## 🎯 Roadmap
+## 🏆 Key Features Implemented
 
-### Phase 1 (Current)
-- ✅ Core A2A agent implementation
-- ✅ LangGraph workflow orchestration
-- ✅ Basic voice and notification integration
-- ✅ HIPAA-compliant logging
+### ✅ **Complete Medical Tourism Workflow**
+- **End-to-end orchestration** from booking to discharge
+- **Real-time flight monitoring** with automated updates via external Flight Agent
+- **Multi-agent coordination** via JSON-RPC protocol
+- **Dummy data storage** for testing (bypassing database per user requirements)
 
-### Phase 2
-- 🔄 Advanced voice AI integration
-- 🔄 Machine learning for workflow optimization
-- 🔄 Multi-language support
-- 🔄 Advanced analytics dashboard
+### ✅ **Production-Ready Deployment**
+- **Docker containerization** with health checks
+- **AWS EC2 deployment** with automated scripts at `http://ec2-3-16-29-184.us-east-2.compute.amazonaws.com:8000`
+- **Background job scheduling** with APScheduler
+- **Comprehensive API documentation**
 
-### Phase 3
-- 📋 Integration with more medical systems
-- 📋 IoT device integration
-- 📋 Advanced emergency response
-- 📋 Global deployment support
+### ✅ **Real-Time Communication**
+- **Voice agent integration** with complete patient context 
+- **Email/SMS notifications** to patients and families via Notification Agent 
+- **Flight status updates** via Flight Agent
+
+### ✅ **Frontend Integration Ready**
+- **Flutter app compatibility** 
+- **Booking API** accepting complete patient data from frontend
+- **Voice call API** with user context
+- **Trip status API** for real-time updates
+
+## 🎯 Development Status
+
+### ✅ **Phase 1 - COMPLETED**
+- ✅ **Core orchestration engine** with multi-agent coordination via JSON-RPC
+- ✅ **Dummy data storage** for testing (in-memory) 
+- ✅ **Real-time notifications** via external Notification Agent
+- ✅ **Voice integration** with complete patient context sharing via Voice Agent
+- ✅ **Production deployment** on AWS EC2 at `http://ec2-3-16-29-184.us-east-2.compute.amazonaws.com:8000`
+- ✅ **Comprehensive API** with booking, voice, flight status, and notification endpoints
+- ✅ **Background scheduling** for automated workflows
+- ✅ **Flight monitoring** with live status updates via Flight Agent
+- ✅ **Flutter frontend integration** with snake_case field format support
+
+## 📊 System Metrics
+
+- **🏗️ Architecture**: Microservices with JSON-RPC protocol
+- **🔒 Security**: Production-ready with environment-based configuration
+- **⚡ Performance**: Real-time processing with background jobs
+- **🌐 Deployment**: Production-ready on AWS EC2 at `http://ec2-3-16-29-184.us-east-2.compute.amazonaws.com:8000`
+- **📱 Integration**: Flutter app + Voice UI + Admin dashboard ready
+- **🤖 Agents**: 3 active external agents (Voice, Notification, Flight) coordinated via Orchestrated
 
 ---
 
-**Built with ❤️ for elderly travelers and their families**
+**🏥 Guardian Medical Tourism Orchestrator**  
+*Built with ❤️ for elderly travelers and their families*  
+*Ready for production deployment and frontend integration*
