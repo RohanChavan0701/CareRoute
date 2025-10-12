@@ -424,61 +424,61 @@ async def send_appointment_reminder(request: dict):
 async def create_booking(booking_data: dict):
     """Create a new booking and start orchestration"""
     try:
-        # Extract required fields from your BookingRequest format
-        user_id = booking_data.get("userId")
-        booking_id = booking_data.get("bookingId") 
-        patient_id = booking_data.get("patientId")
+        # Extract required fields from Flutter BookingRequest format (snake_case)
+        user_id = booking_data.get("user_id")
+        booking_id = booking_data.get("booking_id") 
+        patient_id = booking_data.get("patient_id")
         
         if not user_id:
-            raise HTTPException(status_code=400, detail="userId is required")
+            raise HTTPException(status_code=400, detail="user_id is required")
         
-        # Map your frontend format to orchestrator format
+        # Map Flutter frontend format to orchestrator format
         orchestrator_data = {
             "user_id": user_id,
             "patient_id": patient_id or user_id,
             "booking_id": booking_id,
-            "patient_name": booking_data.get("patientName"),
-            "first_name": booking_data.get("firstName"),
-            "last_name": booking_data.get("lastName"),
-            "date_of_birth": booking_data.get("dateOfBirth"),
-            "patient_language": booking_data.get("patientLanguage"),
+            "patient_name": booking_data.get("patient_name"),
+            "first_name": booking_data.get("first_name"),
+            "last_name": booking_data.get("last_name"),
+            "date_of_birth": booking_data.get("date_of_birth"),
+            "patient_language": booking_data.get("patient_language"),
             "age": booking_data.get("age"),
             "email": booking_data.get("email"),
-            "emergency_contact": booking_data.get("emergencyContact"),
-            "medical_conditions": booking_data.get("medicalConditions", []),
-            "special_requirements": booking_data.get("specialRequirements"),
-            "companion_name": booking_data.get("companionName"),
+            "emergency_contact": booking_data.get("emergency_contact"),
+            "medical_conditions": booking_data.get("medical_conditions", []),
+            "special_requirements": booking_data.get("special_requirements"),
+            "companion_name": booking_data.get("companion_name"),
             
             # Flight info
-            "flight_number": booking_data.get("flightNumber"),
-            "flight_date": booking_data.get("flightDate"),
-            "flight_time": booking_data.get("flightTime"),
-            "departure_airport": booking_data.get("departureAirport"),
-            "arrival_airport": booking_data.get("arrivalAirport"),
+            "flight_number": booking_data.get("flight_number"),
+            "flight_date": booking_data.get("flight_date"),
+            "flight_time": booking_data.get("flight_time"),
+            "departure_airport": booking_data.get("departure_airport"),
+            "arrival_airport": booking_data.get("arrival_airport"),
             
             # Hotel info
-            "hotel_name": booking_data.get("hotelName"),
-            "hotel_booking_reference": booking_data.get("hotelBookingReference"),
-            "hotel_check_in": booking_data.get("hotelCheckIn"),
-            "hotel_check_out": booking_data.get("hotelCheckOut"),
-            "hotel_room_number": booking_data.get("hotelRoomNumber"),
+            "hotel_name": booking_data.get("hotel_name"),
+            "hotel_booking_reference": booking_data.get("hotel_booking_reference"),
+            "hotel_check_in": booking_data.get("hotel_check_in"),
+            "hotel_check_out": booking_data.get("hotel_check_out"),
+            "hotel_room_number": booking_data.get("hotel_room_number"),
             
             # Hospital info
-            "hospital_name": booking_data.get("hospitalName"),
-            "doctor_name": booking_data.get("doctorName"),
-            "appointment_date": booking_data.get("appointmentDate"),
-            "appointment_time": booking_data.get("appointmentTime"),
-            "appointment_id": booking_data.get("appointmentId"),
+            "hospital_name": booking_data.get("hospital_name"),
+            "doctor_name": booking_data.get("doctor_name"),
+            "appointment_date": booking_data.get("appointment_date"),
+            "appointment_time": booking_data.get("appointment_time"),
+            "appointment_id": booking_data.get("appointment_id"),
             
             # Travel dates
-            "travel_date": booking_data.get("travelDate"),
-            "return_date": booking_data.get("returnDate"),
-            "expected_discharge_date": booking_data.get("expectedDischargeDate"),
-            "discharge_status": booking_data.get("dischargeStatus"),
+            "travel_date": booking_data.get("travel_date"),
+            "return_date": booking_data.get("return_date"),
+            "expected_discharge_date": booking_data.get("expected_discharge_date"),
+            "discharge_status": booking_data.get("discharge_status"),
             
             # Transportation
-            "pickup_time": booking_data.get("pickupTime"),
-            "shuttle_driver": booking_data.get("shuttleDriver")
+            "pickup_time": booking_data.get("pickup_time"),
+            "shuttle_driver": booking_data.get("shuttle_driver")
         }
         
         # Start orchestration with booking data
