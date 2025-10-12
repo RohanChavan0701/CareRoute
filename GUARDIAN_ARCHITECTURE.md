@@ -7,33 +7,33 @@ Guardian is the **intelligent orchestrator** that coordinates medical tourism fo
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Flutter App                             │
-│              (Patient Booking Input)                       │
+│                    Flutter App                              │
+│              (Patient Booking Input)                        │
 └─────────────────────┬───────────────────────────────────────┘
                       │ POST /flutter/patient-booking
                       ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                Guardian Orchestrator                       │
-│                     (The Brain)                            │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────┐ │
-│  │   LangGraph     │  │   Scheduler     │  │  Flight     │ │
-│  │   Workflow      │  │   Service       │  │  Tracker    │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────┘ │
+│                Guardian Orchestrator                        │
+│                     (The Brain)                             │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────┐  │
+│  │   LangGraph     │  │   Scheduler     │  │  Flight     │  │
+│  │   Workflow      │  │   Service       │  │  Tracker    │  │
+│  └─────────────────┘  └─────────────────┘  └─────────────┘  │
 └─────────────────────┬───────────────────────────────────────┘
                       │ A2A Protocol (JSON-RPC 2.0)
                       ▼
-        ┌─────────────┬─────────────┬─────────────┬─────────────┐
-        │             │             │             │             │
-┌───────▼────┐ ┌─────▼─────┐ ┌─────▼─────┐ ┌─────▼─────┐ ┌─────▼─────┐
-│   Hotel    │ │ Hospital  │ │   Voice   │ │Notification│ │  Flight   │
-│   Agent    │ │   Agent   │ │   Agent   │ │   Agent    │ │   Agent   │
-│            │ │           │ │           │ │           │ │           │
-│ - Confirm  │ │ - Confirm │ │ - Twilio  │ │ - SMS     │ │ - Track   │
-│   Booking  │ │   Appt    │ │ - OpenAI  │ │ - Email   │ │   Flight  │
-│ - Check-in │ │ - Medical │ │ - Calls   │ │ - Push    │ │ - ETA     │
-│ - Special  │ │ - Records │ │ - Real-time│ │ - FCM     │ │ - Status  │
-│   Needs    │ │ - Transport│ │ - Alerts  │ │ - Family  │ │ - Delays  │
-└────────────┘ └───────────┘ └───────────┘ └───────────┘ └───────────┘
+      ┌───────────────┬───────────────┐
+      │               │               │
+┌─────▼───────┐ ┌─────▼───────┐ ┌─────▼─────┐
+│   Voice     │ │Notification │ │  Flight   │
+│   Agent     │ │   Agent     │ │   Agent   │
+│             │ │             │ │           │
+│ - Twilio    │ │ - SMS       │ │ - Track   │
+│ - OpenAI    │ │ - Email     │ │   Flight  │
+│ - Calls     │ │ - Push      │ │ - ETA     │
+│ - Real-time │ │ - FCM       │ │ - Status  │
+│ - Alerts    │ │ - Family    │ │ - Delays  │
+└─────────────┘ └─────────────┘ └───────────┘
 ```
 
 ## Guardian Brain Workflow
