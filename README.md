@@ -13,6 +13,11 @@ This project consists of multiple interconnected repositories:
 
 ### 🤖 **External Agent Repositories**
 
+#### 📱 **Flutter Frontend App**
+- **[Flutter Medical Tourism App](https://github.com/ForgottenLight4415/codefest-25-app)** - Patient booking interface
+- **Function**: Patient booking input and trip management
+- **Status**: ✅ **READY** - Flutter app for medical tourism planning
+
 #### ✈️ **Flight Agent**
 - **[Flight API Repository](https://github.com/rohanpc0701/Codefest_Flightapi)** - Real-time flight tracking
 - **Function**: Flight status monitoring and updates
@@ -58,10 +63,10 @@ CareRoute automatically orchestrates:
 
 ## 🚀 Live Demo & Deployment
 
-- **🌐 Production URL**: `http://3.16.29.184:8000`
+- **🌐 URL**: `http://3.16.29.184:8000`
 - **📊 Health Check**: `http://3.16.29.184:8000/health`
 - **📚 API Docs**: `http://3.16.29.184:8000/docs`
-- **🐳 Docker Ready**: Full containerization with production deployment
+- **🐳 Docker Ready**: Full containerization with deployment
 
 ## 🤖 External Agent Integration
 
@@ -94,7 +99,7 @@ CareRoute automatically orchestrates:
 - **Status**: ✅ **WORKING** - Successfully tested with UAL606 flight data
 - **Features**: Live flight data, delay notifications, gate information
 
-### Agents Not Currently Integrated
+### Future Agents Ideas
 
 #### ♿ Accessibility Agent
 - **Status**: Not currently integrated
@@ -102,12 +107,10 @@ CareRoute automatically orchestrates:
 - **Note**: Removed from current workflow per user requirements
 
 #### 🏨 Hotel Agent
-- **Status**: Not implemented
 - **Function**: Hotel booking confirmations and arrangements
 - **Note**: Using direct notification system instead
 
 #### 🏥 Hospital Agent  
-- **Status**: Not implemented
 - **Function**: Medical appointment scheduling and confirmations
 - **Note**: Using direct notification system instead
 
@@ -299,7 +302,7 @@ careRoute_medical_orchestrator/
 │   └── hospital_agent.py      # Hospital coordination
 ├── deploy/                    # Deployment scripts
 │   ├── deploy-to-ec2.sh       # EC2 deployment script
-│   ├── Dockerfile             # Production container
+│   ├── Dockerfile             # Docker container
 │   ├── docker-compose.yml     # Local development setup
 │   └── health-monitor.sh      # Health monitoring
 ├── aws/                       # AWS deployment configurations
@@ -330,7 +333,6 @@ careRoute_medical_orchestrator/
 ├── docs/                      # Architecture diagrams and visuals
 │   └── architecture-diagram.png # System architecture diagram
 ├── nginx.conf                 # Nginx configuration
-├── production.env             # Production environment variables (gitignored)
 ├── .gitignore                 # Git ignore rules
 └── README.md                  # This file
 ```
@@ -347,7 +349,7 @@ docker-compose up --build -d
 curl http://localhost:8000/health
 ```
 
-### ☁️ AWS EC2 Production Deployment
+### ☁️ AWS EC2 Deployment
 
 ```bash
 # Deploy to EC2 (replace with your IP and key)
@@ -357,21 +359,15 @@ curl http://localhost:8000/health
 curl http://3.16.29.184:8000/health
 ```
 
-### 🔧 Production Setup
+### 🔧 Setup
 
 1. **EC2 Instance**: Ubuntu 20.04+ with Docker installed
-2. **Environment**: Production environment variables configured
-3. **Database**: PostgreSQL with HIPAA encryption
+2. **Environment**: Environment variables configured
+3. **Database**: PostgreSQL 
 4. **Monitoring**: Health checks and audit logging enabled
 5. **Security**: HTTPS endpoints and encrypted communication
 
-## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
 
 ### Development Guidelines
 
@@ -380,14 +376,6 @@ curl http://3.16.29.184:8000/health
 - Write comprehensive tests
 - Update documentation
 
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-
-- **Documentation**: [Wiki](link-to-wiki)
-- **Issues**: [GitHub Issues](link-to-issues)
-- **Discussions**: [GitHub Discussions](link-to-discussions)
 
 ## 🏆 Key Features Implemented
 
@@ -397,7 +385,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - **Multi-agent coordination** via JSON-RPC protocol
 - **Dummy data storage** for testing (bypassing database per user requirements)
 
-###  **Production-Ready Deployment**
+###  **Deployment**
 - **Docker containerization** with health checks
 - **AWS EC2 deployment** with automated scripts at `http://ec2-3-16-29-184.us-east-2.compute.amazonaws.com:8000`
 - **Background job scheduling** with APScheduler
@@ -420,7 +408,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - ✅ **Dummy data storage** for testing (in-memory) 
 - ✅ **Real-time notifications** via external Notification Agent
 - ✅ **Voice integration** with complete patient context sharing via Voice Agent
-- ✅ **Production deployment** on AWS EC2 at `http://ec2-3-16-29-184.us-east-2.compute.amazonaws.com:8000`
+- ✅ **Deployment** on AWS EC2 at `http://ec2-3-16-29-184.us-east-2.compute.amazonaws.com:8000`
 - ✅ **Comprehensive API** with booking, voice, flight status, and notification endpoints
 - ✅ **Background scheduling** for automated workflows
 - ✅ **Flight monitoring** with live status updates via Flight Agent
@@ -429,15 +417,15 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 📊 System Metrics
 
 - **🏗️ Architecture**: Microservices with JSON-RPC protocol
-- **🔒 Security**: Production-ready with environment-based configuration
+- **🔒 Security**: Environment-based configuration
 - **⚡ Performance**: Real-time processing with background jobs
-- **🌐 Deployment**: Production-ready on AWS EC2 at `http://ec2-3-16-29-184.us-east-2.compute.amazonaws.com:8000`
-- **📱 Integration**: Flutter app + Voice UI + Admin dashboard ready
+- **🌐 Deployment**: Deployed on AWS EC2 at `http://ec2-3-16-29-184.us-east-2.compute.amazonaws.com:8000`
+- **📱 Integration**: Flutter app + Voice UI + Orchestrator
 - **🤖 Agents**: 3 active external agents (Voice, Notification, Flight) coordinated via CareRoute
 
 ---
 
 **🏥 CareRoute Medical Tourism Orchestrator**  
-*Where care meets comfort*  
+*from check-in to checkup*  
 *Built with ❤️ for elderly travelers and their families*  
 
