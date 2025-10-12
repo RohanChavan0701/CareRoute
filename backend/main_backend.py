@@ -363,5 +363,32 @@ async def send_appointment_reminder(request: dict):
         logger.error(f"❌ Failed to send appointment reminder: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/booking")
+async def create_booking(booking_data: dict):
+    """Create a new booking and start orchestration"""
+    try:
+        user_id = booking_data.get("user_id")
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+        
+        # Start orchestration with booking data
+        orchestration_id = await guardian_orchestrator.start_orchestration(booking_data)
+        
+        # Handle booking creation (send notifications, etc.)
+        result = await guardian_orchestrator.handle_booking_creation(user_id, booking_data)
+        
+        return {
+            "status": "success",
+            "message": "Booking created and orchestration started",
+            "orchestration_id": orchestration_id,
+            "booking_id": booking_data.get("booking_id"),
+            "user_id": user_id,
+            "result": result
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to create booking: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
