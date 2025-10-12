@@ -12,6 +12,7 @@ from typing import Dict, Any, List, Optional
 import httpx
 from .knowledge_base import knowledge_base
 from .dummy_data import dummy_db
+from .fcm_service import fcm_service
 
 # Configure logging
 logging.basicConfig(
@@ -426,6 +427,56 @@ class GuardianOrchestrator:
                 "timestamp": datetime.now().isoformat()
             }
     
+    async def send_boarding_reminder(self, user_id: str, flight_info: Dict[str, Any]):
+        """Send boarding reminder via FCM"""
+        try:
+            await fcm_service.send_boarding_reminder(user_id, flight_info)
+            logger.info(f"📱 Boarding reminder sent to user {user_id}")
+        except Exception as e:
+            logger.error(f"❌ Failed to send boarding reminder: {e}")
+    
+    async def send_flight_status_update(self, user_id: str, flight_info: Dict[str, Any]):
+        """Send flight status update via FCM"""
+        try:
+            await fcm_service.send_flight_status_update(user_id, flight_info)
+            logger.info(f"📱 Flight status update sent to user {user_id}")
+        except Exception as e:
+            logger.error(f"❌ Failed to send flight status update: {e}")
+    
+    async def send_arrival_cab_notification(self, user_id: str, cab_info: Dict[str, Any]):
+        """Send cab request notification 30 minutes before arrival"""
+        try:
+            # Send FCM notification
+            await fcm_service.send_cab_request_notification(user_id, cab_info)
+            
+            # Also send email via notification agent
+            await self._send_a2a_task(
+                "notification_agent",
+                "SendHotelBookingNotification",
+                {
+                    "params": {
+                        "user_id": user_id,
+                        "patient_name": cab_info.get("patient_name", "Patient"),
+                        "hotel_name": cab_info.get("hotel_name", "Hotel"),
+                        "arrival_time": cab_info.get("eta", "soon"),
+                        "driver_name": cab_info.get("driver_name", "Driver"),
+                        "vehicle": cab_info.get("vehicle", "Vehicle")
+                    }
+                }
+            )
+            
+            logger.info(f"📱 Arrival cab notification sent to user {user_id}")
+        except Exception as e:
+            logger.error(f"❌ Failed to send arrival cab notification: {e}")
+    
+    async def send_hospital_appointment_reminder(self, user_id: str, appointment_info: Dict[str, Any]):
+        """Send hospital appointment reminder"""
+        try:
+            await fcm_service.send_hospital_appointment_reminder(user_id, appointment_info)
+            logger.info(f"📱 Hospital appointment reminder sent to user {user_id}")
+        except Exception as e:
+            logger.error(f"❌ Failed to send hospital appointment reminder: {e}")
+
     async def _send_a2a_task(self, agent_id: str, method: str, task_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Send A2A task to external agent

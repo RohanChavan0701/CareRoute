@@ -83,6 +83,90 @@
         "created_at": "2025-10-11T22:55:51.113901",
         "updated_at": "2025-10-11T22:55:51.113904"
       }
+    ],
+    "PAT-FRENCH-001": [
+      {
+        "booking_id": "BOOK_PAT-FRENCH-001_1760240566",
+        "user_id": "PAT-FRENCH-001",
+        "patient_name": "Marie Dubois",
+        "patient_email": "marie.dubois@example.com",
+        "date_of_birth": "1985-03-15",
+        "preferred_language": "French",
+        "emergency_contacts": [
+          "+33-123-456-789"
+        ],
+        "companion_name": "Jean Dubois",
+        "medical_conditions": [
+          "Diabetes",
+          "Hypertension"
+        ],
+        "special_requirements": [
+          "Wheelchair accessible",
+          "French speaking staff"
+        ],
+        "flight_number": "AI101",
+        "flight_date": "2025-10-14T08:00:00",
+        "departure_airport": "CDG",
+        "arrival_airport": "DEN",
+        "hotel_name": "JW Marriott Hotel",
+        "hotel_room_number": "Room 205",
+        "hotel_check_in": "2025-10-14T14:00:00",
+        "hotel_check_out": "2025-10-18T11:00:00",
+        "hotel_booking_reference": "MAR-12345",
+        "shuttle_driver": "Ahmed Hassan",
+        "hospital_name": "Apollo Medical Center",
+        "doctor_name": "Dr. Meera Singh",
+        "hospital_appointment_time": "2025-10-15T09:30:00",
+        "hospital_appointment_id": "APT-789",
+        "expected_discharge_date": "2025-10-17T11:00:00",
+        "new_discharge_date": "2025-10-17T11:00:00",
+        "discharge_status": "Pending",
+        "pickup_time": "2025-10-14T13:45:00",
+        "created_at": "2025-10-11T23:42:46.395127",
+        "updated_at": "2025-10-11T23:42:46.395131"
+      }
+    ],
+    "PAT-FRENCH-002": [
+      {
+        "booking_id": "BOOK_PAT-FRENCH-002_1760241003",
+        "user_id": "PAT-FRENCH-002",
+        "patient_name": "Marie Dubois",
+        "patient_email": "marie.dubois@example.com",
+        "date_of_birth": "1985-03-15",
+        "patient_language": "French",
+        "emergency_contacts": [
+          "+33-123-456-789"
+        ],
+        "companion_name": "Jean Dubois",
+        "medical_conditions": [
+          "Diabetes",
+          "Hypertension"
+        ],
+        "special_requirements": [
+          "Wheelchair accessible",
+          "French speaking staff"
+        ],
+        "flight_number": "AI101",
+        "flight_date": "2025-10-14T08:00:00",
+        "departure_airport": "CDG",
+        "arrival_airport": "DEN",
+        "hotel_name": "JW Marriott Hotel",
+        "hotel_room_number": "Room 205",
+        "hotel_check_in": "2025-10-14T14:00:00",
+        "hotel_check_out": "2025-10-18T11:00:00",
+        "hotel_booking_reference": "MAR-12345",
+        "shuttle_driver": "Ahmed Hassan",
+        "hospital_name": "Apollo Medical Center",
+        "doctor_name": "Dr. Meera Singh",
+        "hospital_appointment_time": "2025-10-15T09:30:00",
+        "hospital_appointment_id": "APT-789",
+        "expected_discharge_date": "2025-10-17T11:00:00",
+        "new_discharge_date": "2025-10-17T11:00:00",
+        "discharge_status": "Pending",
+        "pickup_time": "2025-10-14T13:45:00",
+        "created_at": "2025-10-11T23:50:03.072209",
+        "updated_at": "2025-10-11T23:50:03.072214"
+      }
     ]
   },
   "flights": {},

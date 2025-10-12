@@ -47,19 +47,19 @@ class DummyDatabase:
         sample_booking = {
             "booking_id": f"BOOK_{user_id}_{int(datetime.now().timestamp())}",
             "user_id": user_id,
-            "patient_name": "Rohan Chavan",
-            "patient_email": "rohan.chavan@example.com",
+            "patient_name": "Marie Dubois",
+            "patient_email": "marie.dubois@example.com",
             "date_of_birth": "1985-03-15",
-            "preferred_language": "Hindi",
-            "emergency_contacts": ["+1-540-558-5805"],
-            "companion_name": "Jane Doe",
+            "patient_language": "French",
+            "emergency_contacts": ["+33-123-456-789"],
+            "companion_name": "Jean Dubois",
             "medical_conditions": ["Diabetes", "Hypertension"],
-            "special_requirements": ["Wheelchair accessible", "Hindi speaking staff"],
+            "special_requirements": ["Wheelchair accessible", "French speaking staff"],
             
             # Flight details
             "flight_number": "AI101",
             "flight_date": "2025-10-14T08:00:00",
-            "departure_airport": "DEL",
+            "departure_airport": "CDG",
             "arrival_airport": "DEN",
             
             # Hotel details

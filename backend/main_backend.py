@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Guardian A2A Orchestrator - Simplified AG-UI Protocol Backend
-Uses standard AG-UI protocol for basic functionality
+Guardian Medical Tourism Orchestrator - Main Backend
+Simple REST API for Flutter app integration with real-time updates
 """
 
 import asyncio
@@ -21,6 +21,7 @@ import uvicorn
 # Import our orchestrator and scheduler
 from .orchestrator import guardian_orchestrator
 from .scheduler import guardian_scheduler
+from .fcm_service import fcm_service
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -41,8 +42,8 @@ class SimpleResponse(BaseModel):
 
 # Create FastAPI app
 app = FastAPI(
-    title="Guardian Orchestrator - Simplified AG-UI Backend",
-    description="Simplified version for testing core functionality",
+    title="Guardian Medical Tourism Orchestrator",
+    description="Backend API for medical tourism trip orchestration with real-time updates",
     version="1.0.0"
 )
 
@@ -58,7 +59,7 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     """Startup event handler"""
-    logger.info("🚀 Guardian A2A Orchestrator Simplified Backend starting up...")
+    logger.info("🚀 Guardian Medical Tourism Orchestrator starting up...")
     logger.info("✅ Backend initialized without database")
     logger.info("✅ Guardian Orchestrator ready")
     
@@ -82,14 +83,14 @@ async def shutdown_event():
 @app.get("/")
 async def root():
     """Root endpoint"""
-    return {"message": "Guardian A2A Orchestrator - Simplified Backend", "status": "running"}
+    return {"message": "Guardian Medical Tourism Orchestrator", "status": "running"}
 
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
     return {
         "status": "healthy",
-        "protocol": "AG-UI-Simplified",
+        "protocol": "REST-API",
         "version": "1.0.0",
         "agent_id": "guardian_orchestrator",
         "timestamp": datetime.now().isoformat(),
@@ -236,6 +237,116 @@ async def get_trip_status(user_id: str):
         
     except Exception as e:
         logger.error(f"❌ Failed to get trip status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/fcm/register")
+async def register_fcm_token(request: dict):
+    """Register FCM device token for push notifications"""
+    try:
+        user_id = request.get("user_id")
+        device_token = request.get("device_token")
+        
+        if not user_id or not device_token:
+            raise HTTPException(status_code=400, detail="user_id and device_token are required")
+        
+        fcm_service.register_device_token(user_id, device_token)
+        
+        return {
+            "status": "success",
+            "message": "FCM token registered successfully",
+            "user_id": user_id
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to register FCM token: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/fcm/send-boarding-reminder")
+async def send_boarding_reminder(request: dict):
+    """Send boarding reminder notification"""
+    try:
+        user_id = request.get("user_id")
+        flight_info = request.get("flight_info", {})
+        
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+        
+        await guardian_orchestrator.send_boarding_reminder(user_id, flight_info)
+        
+        return {
+            "status": "success",
+            "message": "Boarding reminder sent",
+            "user_id": user_id
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to send boarding reminder: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/fcm/send-flight-update")
+async def send_flight_update(request: dict):
+    """Send flight status update notification"""
+    try:
+        user_id = request.get("user_id")
+        flight_info = request.get("flight_info", {})
+        
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+        
+        await guardian_orchestrator.send_flight_status_update(user_id, flight_info)
+        
+        return {
+            "status": "success",
+            "message": "Flight status update sent",
+            "user_id": user_id
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to send flight update: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/fcm/send-cab-notification")
+async def send_cab_notification(request: dict):
+    """Send cab arrival notification"""
+    try:
+        user_id = request.get("user_id")
+        cab_info = request.get("cab_info", {})
+        
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+        
+        await guardian_orchestrator.send_arrival_cab_notification(user_id, cab_info)
+        
+        return {
+            "status": "success",
+            "message": "Cab notification sent",
+            "user_id": user_id
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to send cab notification: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/fcm/send-appointment-reminder")
+async def send_appointment_reminder(request: dict):
+    """Send hospital appointment reminder"""
+    try:
+        user_id = request.get("user_id")
+        appointment_info = request.get("appointment_info", {})
+        
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+        
+        await guardian_orchestrator.send_hospital_appointment_reminder(user_id, appointment_info)
+        
+        return {
+            "status": "success",
+            "message": "Appointment reminder sent",
+            "user_id": user_id
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to send appointment reminder: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
