@@ -1,13 +1,13 @@
-# Guardian Medical Tourism Orchestrator
+# CareRoute Medical Tourism Orchestrator
 
-🏥 **Guardian** is a comprehensive medical tourism orchestration system that coordinates multi-agent workflows for elderly travelers, providing seamless coordination between hotels, hospitals, voice agents, and family notifications.
+🏥 **CareRoute** - *where care meets comfort* - is a comprehensive medical tourism orchestration system that coordinates multi-agent workflows for elderly travelers, providing seamless coordination between hotels, hospitals, voice agents, and family notifications.
 
 ## 📁 Repository Structure
 
 This project consists of multiple interconnected repositories:
 
 ### 🎯 **Main Orchestrator** (This Repository)
-- **[Guardian Medical Tourism Orchestrator](https://github.com/atharvasalunke/medical_orchestrator)** - Core orchestration engine
+- **[CareRoute Medical Tourism Orchestrator](https://github.com/atharvasalunke/medical_orchestrator)** - Core orchestration engine
 - **Function**: Central coordinator for all medical tourism workflows
 - **Status**:  **Hosted on AWS** - Deployed at `http://ec2-3-16-29-184.us-east-2.compute.amazonaws.com:8000/`
 
@@ -27,21 +27,21 @@ This project consists of multiple interconnected repositories:
 
 ## 🎯 Overview
 
-Guardian automatically orchestrates:
+CareRoute automatically orchestrates:
 - ✈️ **Flight Monitoring** - Real-time flight status tracking and updates via external Flight Agent
 - 📞 **Voice Communication** - AI-powered voice calls with complete patient context via Voice Agent
 - 📱 **Family Notifications** - Automated updates to family members via email/SMS via Notification Agent
-- 🏥 **Dummy Data Storage** - In-memory data storage for testing and development 
+- 🏥 **HIPAA-Compliant Database** - Secure patient data management with encryption 
 - 🎯 **Multi-Agent Coordination** - Seamless integration with external services via JSON-RPC protocol
 
 ## 🏗️ System Architecture
 
-![Guardian Medical Tourism Orchestrator Architecture](https://github.com/atharvasalunke/medical_orchestrator/blob/main/docs/architecture-diagram.png)
+![CareRoute Medical Tourism Orchestrator Architecture](https://github.com/atharvasalunke/medical_orchestrator/blob/main/docs/architecture-diagram.png)
 
 ### Architecture Flow
 
 1. **User Interaction Layer**: Flutter App for patient booking input
-2. **Core Orchestrator**: Guardian Orchestrator (The Brain) running on AWS EC2
+2. **Core Orchestrator**: CareRoute Orchestrator (The Brain) running on AWS EC2
    - Booking Agent: Handles initial booking processing
    - Scheduler Service: Manages task scheduling and workflows
    - Flight Tracker: Monitors flight status and updates
@@ -65,7 +65,7 @@ Guardian automatically orchestrates:
 
 ## 🤖 External Agent Integration
 
-### Guardian Orchestrator (This Repository)
+### CareRoute Orchestrator (This Repository)
 - **Main coordinator** for medical tourism workflow
 - **Flight monitoring** and status tracking
 - **A2A protocol** communication with external agents
@@ -198,33 +198,6 @@ Guardian automatically orchestrates:
 - `POST /message` - **General message handling**
 - `GET /docs` - **Interactive API documentation**
 
-## 🔧 Configuration
-
-### Environment Variables
-
-Key configuration options in `production.env`:
-
-```bash
-# Application Settings
-ENVIRONMENT=production
-DEBUG=false
-SECRET_KEY=your-production-secret-key
-
-# External Agent Endpoints (Active)
-VOICE_AGENT_URL=http://18.217.151.15:8000/jsonrpc
-NOTIFICATION_AGENT_URL=http://3.143.225.130:8000
-FLIGHT_AGENT_URL=http://54.158.27.0:8001/a2a
-
-# Database Configuration
-DATABASE_URL=postgresql://guardian_user:guardian_secure_2024@localhost:5432/guardian_hipaa_db
-HIPAA_ENCRYPTION_PASSWORD=guardian_hipaa_encryption_password_2024_secure
-HIPAA_ENCRYPTION_SALT=guardian_hipaa_salt_2024_secure
-
-# Security & Compliance
-HIPAA_MODE=true
-AUDIT_LOG_ENABLED=true
-DATA_RETENTION_DAYS=2555
-```
 
 ### Voice Policy Configuration
 
@@ -237,13 +210,13 @@ Voice communication is controlled by HIPAA-conscious policies:
 
 ## 🏥 HIPAA Compliance
 
-Guardian is designed with HIPAA compliance in mind:
+CareRoute is designed with HIPAA compliance in mind:
 
 - **No PHI Logging**: Only reference IDs are logged
 - **Encrypted Communication**: All A2A messages are encrypted
 - **Audit Logging**: Complete audit trail of all actions
 - **Access Controls**: Role-based access to sensitive data
-- **Data Retention**: 7-year retention policy
+- **Data Retention**: 1 month retention policy
 - **Voice Policies**: Controlled voice communication
 
 ## 📊 Monitoring & Observability
@@ -258,7 +231,6 @@ Guardian is designed with HIPAA compliance in mind:
 ### Logging
 
 - Structured JSON logging
-- HIPAA-compliant audit logs
 - Error tracking and alerting
 - Performance monitoring
 
@@ -302,32 +274,68 @@ pytest tests/integration/ -v
 ## 📁 Repository Structure
 
 ```
-medical_orchestrator/
-├── backend/                    # Guardian Orchestrator Backend
+careRoute_medical_orchestrator/
+├── backend/                    # CareRoute Orchestrator Backend
 │   ├── main_backend.py        # FastAPI application entry point
 │   ├── orchestrator.py        # Core orchestration logic
 │   ├── scheduler.py           # Background task scheduler
 │   ├── fcm_service.py         # Firebase Cloud Messaging
-│   ├── database/              # HIPAA-compliant database layer
+│   ├── dummy_data.py          # In-memory data storage for testing
+│   ├── knowledge_base.py      # Knowledge base for context
+│   ├── database/              # HIPAA-compliant database layer (available but not active)
 │   │   ├── models.py          # SQLAlchemy models
 │   │   ├── repository.py      # Data access layer
 │   │   ├── orchestrator_service.py # Orchestrator database service
 │   │   ├── encryption.py      # HIPAA encryption utilities
-│   │   └── audit.py           # Audit logging
+│   │   ├── audit.py           # Audit logging
+│   │   ├── connection.py      # Database connection management
+│   │   └── migrations.py      # Database migration scripts
 │   └── requirements.txt       # Python dependencies
-├── tests/                     # Test suite
+├── agents/                    # Agent implementations (legacy)
+│   ├── voice_agent.py         # Voice agent integration
+│   ├── notify_agent.py        # Notification agent integration
+│   ├── accessibility_agent.py # Accessibility services
+│   ├── hotel_agent.py         # Hotel coordination
+│   └── hospital_agent.py      # Hospital coordination
 ├── deploy/                    # Deployment scripts
-│   ├── deploy-final.sh        # EC2 deployment script
-│   ├── ec2-setup.sh          # EC2 setup script
-│   └── codefest.pem          # EC2 access key
+│   ├── deploy-to-ec2.sh       # EC2 deployment script
+│   ├── Dockerfile             # Production container
+│   ├── docker-compose.yml     # Local development setup
+│   └── health-monitor.sh      # Health monitoring
+├── aws/                       # AWS deployment configurations
+│   ├── deploy.sh              # AWS deployment script
+│   ├── ecs-service.json       # ECS service definition
+│   └── ecs-task-definition.json # ECS task definition
+├── tests/                     # Comprehensive test suite
+│   ├── test_orchestrator.py   # Core orchestration tests
+│   ├── test_complete_trip_flow.py # End-to-end flow tests
+│   ├── test_voice_agent_context.py # Voice agent integration tests
+│   ├── test_notification_endpoint.py # Notification tests
+│   └── test_flight_agent_compatibility.py # Flight agent tests
 ├── samples/                   # Sample data and requests
-├── docker-compose.yml         # Local development setup
-├── Dockerfile                 # Production container
-├── production.env             # Production configuration
-└── FRONTEND_API_INTEGRATION.md # Frontend integration guide
+│   ├── flutter_integration_example.dart # Flutter integration example
+│   ├── sample_voice_call_context.json # Voice agent context template
+│   └── sample_notification_with_email.json # Notification examples
+├── sample_requests/           # API request examples
+│   ├── voice_agent_requests.json # Voice agent request formats
+│   └── notification_agent_requests.json # Notification request formats
+├── sample_responses/          # API response examples
+│   └── notification_agent_responses.json # Notification response examples
+├── documentation/             # Comprehensive documentation
+│   ├── GUARDIAN_ARCHITECTURE.md # System architecture guide
+│   ├── HIPAA_COMPLIANCE_GUIDE.md # HIPAA compliance documentation
+│   ├── FRONTEND_API_INTEGRATION.md # Frontend integration guide
+│   ├── HOTEL_AGENT_NOTIFICATION_FLOW.md # Hotel agent workflow
+│   └── DEPLOYMENT.md          # Deployment guide
+├── docs/                      # Architecture diagrams and visuals
+│   └── architecture-diagram.png # System architecture diagram
+├── nginx.conf                 # Nginx configuration
+├── production.env             # Production environment variables (gitignored)
+├── .gitignore                 # Git ignore rules
+└── README.md                  # This file
 ```
 
-## 🚀 Deployment
+##  Deployment
 
 ### 🐳 Docker Local Development
 
@@ -357,39 +365,6 @@ curl http://3.16.29.184:8000/health
 4. **Monitoring**: Health checks and audit logging enabled
 5. **Security**: HTTPS endpoints and encrypted communication
 
-## 📈 Scaling
-
-### Horizontal Scaling
-
-- Multiple Guardian instances behind load balancer
-- Redis for shared state
-- PostgreSQL read replicas
-- Message queue for async processing
-
-### Performance Optimization
-
-- Connection pooling for databases
-- Caching frequently accessed data
-- Async processing for I/O operations
-- Rate limiting for external APIs
-
-## 🔒 Security
-
-### A2A Security
-
-- API token authentication
-- Message signature verification
-- Encrypted communication channels
-- Agent identity verification
-
-### Application Security
-
-- JWT token authentication
-- Role-based access control
-- Input validation and sanitization
-- SQL injection prevention
-- XSS protection
-
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -404,7 +379,6 @@ curl http://3.16.29.184:8000/health
 - Add type hints
 - Write comprehensive tests
 - Update documentation
-- Ensure HIPAA compliance
 
 ## 📝 License
 
@@ -417,24 +391,24 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🏆 Key Features Implemented
 
-### ✅ **Complete Medical Tourism Workflow**
+### **Complete Medical Tourism Workflow**
 - **End-to-end orchestration** from booking to discharge
 - **Real-time flight monitoring** with automated updates via external Flight Agent
 - **Multi-agent coordination** via JSON-RPC protocol
 - **Dummy data storage** for testing (bypassing database per user requirements)
 
-### ✅ **Production-Ready Deployment**
+###  **Production-Ready Deployment**
 - **Docker containerization** with health checks
 - **AWS EC2 deployment** with automated scripts at `http://ec2-3-16-29-184.us-east-2.compute.amazonaws.com:8000`
 - **Background job scheduling** with APScheduler
 - **Comprehensive API documentation**
 
-### ✅ **Real-Time Communication**
+### **Real-Time Communication**
 - **Voice agent integration** with complete patient context 
 - **Email/SMS notifications** to patients and families via Notification Agent 
 - **Flight status updates** via Flight Agent
 
-### ✅ **Frontend Integration Ready**
+### **Frontend Integration Ready**
 - **Flutter app compatibility** 
 - **Booking API** accepting complete patient data from frontend
 - **Voice call API** with user context
@@ -442,7 +416,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🎯 Development Status
 
-### ✅ **Phase 1 - COMPLETED**
 - ✅ **Core orchestration engine** with multi-agent coordination via JSON-RPC
 - ✅ **Dummy data storage** for testing (in-memory) 
 - ✅ **Real-time notifications** via external Notification Agent
@@ -460,10 +433,11 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - **⚡ Performance**: Real-time processing with background jobs
 - **🌐 Deployment**: Production-ready on AWS EC2 at `http://ec2-3-16-29-184.us-east-2.compute.amazonaws.com:8000`
 - **📱 Integration**: Flutter app + Voice UI + Admin dashboard ready
-- **🤖 Agents**: 3 active external agents (Voice, Notification, Flight) coordinated via Orchestrated
+- **🤖 Agents**: 3 active external agents (Voice, Notification, Flight) coordinated via CareRoute
 
 ---
 
-**🏥 Guardian Medical Tourism Orchestrator**  
+**🏥 CareRoute Medical Tourism Orchestrator**  
+*Where care meets comfort*  
 *Built with ❤️ for elderly travelers and their families*  
-*Ready for production deployment and frontend integration*
+

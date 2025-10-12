@@ -12,7 +12,8 @@ __pycache__/
 *.pyzwzwzwzw
 
 .env
+production.env
 venv/
 
 .hippa-encryption.key
-.codefest.pem
+codefest.pem
