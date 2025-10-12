@@ -48,9 +48,8 @@ CareRoute automatically orchestrates:
 1. **User Interaction Layer**: Flutter App for patient booking input
 2. **Core Orchestrator**: CareRoute Orchestrator (The Brain) running on AWS EC2
    - Booking Agent: Handles initial booking processing
-   - Scheduler Service: Manages task scheduling and workflows
    - Flight Tracker: Monitors flight status and updates
-3. **Data Storage**: Dummy data storage for testing (in-memory)
+3. **Data Storage**: Database
 4. **External Agents**: Voice, Notification, and Flight agents via JSON-RPC 2.0
 
 ### Key Components
@@ -367,8 +366,6 @@ curl http://3.16.29.184:8000/health
 4. **Monitoring**: Health checks and audit logging enabled
 5. **Security**: HTTPS endpoints and encrypted communication
 
-
-
 ### Development Guidelines
 
 - Follow PEP 8 style guide
@@ -397,10 +394,8 @@ curl http://3.16.29.184:8000/health
 - **Flight status updates** via Flight Agent
 
 ### **Frontend Integration Ready**
-- **Flutter app compatibility** 
 - **Booking API** accepting complete patient data from frontend
 - **Voice call API** with user context
-- **Trip status API** for real-time updates
 
 ## 🎯 Development Status
 
@@ -410,9 +405,8 @@ curl http://3.16.29.184:8000/health
 - ✅ **Voice integration** with complete patient context sharing via Voice Agent
 - ✅ **Deployment** on AWS EC2 at `http://ec2-3-16-29-184.us-east-2.compute.amazonaws.com:8000`
 - ✅ **Comprehensive API** with booking, voice, flight status, and notification endpoints
-- ✅ **Background scheduling** for automated workflows
 - ✅ **Flight monitoring** with live status updates via Flight Agent
-- ✅ **Flutter frontend integration** with snake_case field format support
+- ✅ **Flutter frontend integration** 
 
 ## 📊 System Metrics
 
@@ -426,6 +420,6 @@ curl http://3.16.29.184:8000/health
 ---
 
 **🏥 CareRoute Medical Tourism Orchestrator**  
-*from check-in to checkup*  
+*From check-in to checkup*  
 *Built with ❤️ for elderly travelers and their families*  
 
