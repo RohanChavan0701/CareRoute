@@ -104,7 +104,7 @@ deploy_application() {
         --exclude='data' \
         --exclude='*.log' \
         backend/ deploy/ tests/ samples/ \
-        Dockerfile docker-compose.yml nginx.conf production.env \
+        Dockerfile docker-compose.yml nginx.conf production.env hipaa.env.example \
         README.md DEPLOYMENT.md *.md
     
     # Copy files to EC2
@@ -162,12 +162,12 @@ EOF
     
     # Test health endpoint
     print_status "Testing health endpoint..."
-    if curl -f -s "http://$EC2_IP:8000/ag-ui/health" > /dev/null; then
+    if curl -f -s "http://$EC2_IP:8000/health" > /dev/null; then
         print_success "Health check passed"
         
         # Show health response
         print_status "Health endpoint response:"
-        curl -s "http://$EC2_IP:8000/ag-ui/health" | python3 -m json.tool || curl -s "http://$EC2_IP:8000/ag-ui/health"
+        curl -s "http://$EC2_IP:8000/health" | python3 -m json.tool || curl -s "http://$EC2_IP:8000/health"
     else
         print_error "Health check failed"
         return 1
@@ -213,8 +213,8 @@ show_deployment_info() {
     echo "  • Container Name: guardian-orchestrator"
     echo ""
     echo "🌐 Access URLs:"
-    echo "  • Direct API: http://$EC2_IP:8000/ag-ui/health"
-    echo "  • Health Check: http://$EC2_IP:8000/ag-ui/health"
+    echo "  • Direct API: http://$EC2_IP:8000/health"
+    echo "  • Health Check: http://$EC2_IP:8000/health"
     echo "  • Nginx Proxy: http://$EC2_IP (if configured)"
     echo ""
     echo "🔧 Management Commands:"
@@ -223,7 +223,7 @@ show_deployment_info() {
     echo "  • Stop: ssh -i $SSH_KEY_PATH $EC2_USER@$EC2_IP 'cd $APP_DIR && docker-compose down'"
     echo ""
     echo "📊 Test the deployment:"
-    echo "  curl -s http://$EC2_IP:8000/ag-ui/health | python3 -m json.tool"
+    echo "  curl -s http://$EC2_IP:8000/health | python3 -m json.tool"
 }
 
 # Main deployment function
