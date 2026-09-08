@@ -10,6 +10,7 @@ BASE_URL="http://localhost:8000"
 LOG_FILE="/var/log/guardian-health.log"
 ALERT_EMAIL="admin@your-domain.com"
 SLACK_WEBHOOK=""  # Optional: Slack webhook URL for alerts
+FLIGHT_AGENT_URL="${FLIGHT_AGENT_URL:-}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -116,12 +117,12 @@ check_external_agents() {
     print_status "Checking external agent connectivity..."
     
     # Check Flight Agent
-    if curl -s --max-time 10 "http://54.158.27.0:8001/a2a" > /dev/null; then
+    if [ -n "$FLIGHT_AGENT_URL" ] && curl -s --max-time 10 "$FLIGHT_AGENT_URL" > /dev/null; then
         print_success "Flight Agent is reachable"
         log_message "EXTERNAL: Flight Agent is reachable"
     else
-        print_warning "Flight Agent is not reachable"
-        log_message "EXTERNAL: Flight Agent is not reachable"
+        print_warning "Flight Agent is not configured or not reachable"
+        log_message "EXTERNAL: Flight Agent is not configured or not reachable"
     fi
     
     # Check Notification Agent

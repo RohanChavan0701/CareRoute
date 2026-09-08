@@ -96,7 +96,7 @@ HOTEL_AGENT_URL=https://hotel-agent.aws.region.elb.amazonaws.com
 HOSPITAL_AGENT_URL=https://hospital-agent.aws.region.elb.amazonaws.com
 VOICE_AGENT_URL=https://voice-agent.aws.region.elb.amazonaws.com
 NOTIFICATION_AGENT_URL=https://notification-system-h36d.onrender.com/a2a/tasks
-FLIGHT_AGENT_URL=http://54.158.27.0:8001/a2a
+FLIGHT_AGENT_URL=${FLIGHT_AGENT_URL:-}
 
 # LLM Integration (Optional)
 OPENAI_API_KEY=
@@ -105,7 +105,7 @@ OPENAI_API_KEY=
 JWT_SECRET_KEY=$(openssl rand -hex 32)
 ENCRYPTION_KEY=$(openssl rand -hex 32)
 
-# HIPAA Compliance
+# Prototype audit and retention feature flags
 HIPAA_MODE=true
 AUDIT_LOG_ENABLED=true
 DATA_RETENTION_DAYS=2555

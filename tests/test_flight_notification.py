@@ -24,7 +24,7 @@ async def test_flight_notification():
             "notification_type": "booking_confirmation",
             "recipients": [
                 {
-                    "email": "umasb19@vt.edu",
+                    "email": "family@example.com",
                     "name": "Jane Smith",
                     "preferred_method": "email"
                 }

@@ -27,7 +27,7 @@ print_error() {
 # Check if required parameters are provided
 if [ $# -lt 2 ]; then
     echo "Usage: $0 <EC2_IP_ADDRESS> <SSH_KEY_PATH> [EC2_USER]"
-    echo "Example: $0 3.15.123.45 ~/.ssh/guardian-key.pem ubuntu"
+    echo "Example: $0 ec2-host.example.com ~/.ssh/guardian-key.pem ubuntu"
     exit 1
 fi
 

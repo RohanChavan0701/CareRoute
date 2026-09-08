@@ -31,11 +31,11 @@ class GuardianOrchestrator:
     def __init__(self):
         # External agent endpoints (from other teams)
         self.agent_endpoints = {
-            "hotel_agent": os.getenv("HOTEL_AGENT_URL", "https://hotel-agent.aws.region.elb.amazonaws.com"),
-            "hospital_agent": os.getenv("HOSPITAL_AGENT_URL", "https://hospital-agent.aws.region.elb.amazonaws.com"),
-            "voice_agent": os.getenv("VOICE_AGENT_URL", "http://18.217.151.15:8000/jsonrpc"),
-            "notification_agent": os.getenv("NOTIFICATION_AGENT_URL", "http://3.143.225.130:8000"),
-            "flight_agent": os.getenv("FLIGHT_AGENT_URL", "http://54.158.27.0:8001/a2a"),
+            "hotel_agent": os.getenv("HOTEL_AGENT_URL", ""),
+            "hospital_agent": os.getenv("HOSPITAL_AGENT_URL", ""),
+            "voice_agent": os.getenv("VOICE_AGENT_URL", ""),
+            "notification_agent": os.getenv("NOTIFICATION_AGENT_URL", ""),
+            "flight_agent": os.getenv("FLIGHT_AGENT_URL", ""),
         }
         
         # Agent health status

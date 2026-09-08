@@ -5,12 +5,13 @@ Tests the entire Guardian Orchestrator flow with real external services
 
 import asyncio
 import json
+import os
 import requests
 from datetime import datetime, timedelta
 import time
 
 BASE_URL = "http://localhost:8000"
-FLIGHT_API_URL = "http://54.158.27.0:8001/a2a"
+FLIGHT_API_URL = os.getenv("FLIGHT_AGENT_URL", "")
 NOTIFICATION_API_URL = "https://notification-system-h36d.onrender.com/a2a/tasks"
 
 def test_real_apis_directly():

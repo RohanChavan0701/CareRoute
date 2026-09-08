@@ -13,31 +13,31 @@ services:
       - ENVIRONMENT=production
       - DEBUG=false
       - LOG_LEVEL=INFO
-      - SECRET_KEY=${SECRET_KEY:-your-production-secret-key}
+      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY}
       
-      # External agent endpoints (AWS URLs for production)
-      - HOTEL_AGENT_URL=${HOTEL_AGENT_URL:-https://hotel-agent.aws.region.elb.amazonaws.com}
-      - HOSPITAL_AGENT_URL=${HOSPITAL_AGENT_URL:-https://hospital-agent.aws.region.elb.amazonaws.com}
-      - VOICE_AGENT_URL=${VOICE_AGENT_URL:-http://18.217.151.15:8000/jsonrpc}
-      - NOTIFICATION_AGENT_URL=${NOTIFICATION_AGENT_URL:-http://3.143.225.130:8000}
-      - FLIGHT_AGENT_URL=${FLIGHT_AGENT_URL:-http://54.158.27.0:8001/a2a}
+      # External agent endpoints; configure only the services you intend to call
+      - HOTEL_AGENT_URL=${HOTEL_AGENT_URL:-}
+      - HOSPITAL_AGENT_URL=${HOSPITAL_AGENT_URL:-}
+      - VOICE_AGENT_URL=${VOICE_AGENT_URL:-}
+      - NOTIFICATION_AGENT_URL=${NOTIFICATION_AGENT_URL:-}
+      - FLIGHT_AGENT_URL=${FLIGHT_AGENT_URL:-}
       
       # LLM Integration (Optional)
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       
       # Security Settings
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-jwt-secret-key}
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-your-encryption-key-32-chars-long}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?Set JWT_SECRET_KEY}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:?Set ENCRYPTION_KEY}
       
-      # HIPAA Compliance
+      # Prototype audit and retention feature flags
       - HIPAA_MODE=true
       - AUDIT_LOG_ENABLED=true
       - DATA_RETENTION_DAYS=2555
       
-      # HIPAA Database Configuration
-      - DATABASE_URL=${DATABASE_URL:-postgresql://guardian_user:guardian_secure_2024@localhost:5432/guardian_hipaa_db}
-      - HIPAA_ENCRYPTION_PASSWORD=${HIPAA_ENCRYPTION_PASSWORD:-guardian_hipaa_encryption_password_2024_secure}
-      - HIPAA_ENCRYPTION_SALT=${HIPAA_ENCRYPTION_SALT:-guardian_hipaa_salt_2024_secure}
+      # Database and encryption configuration
+      - DATABASE_URL=${DATABASE_URL:?Set DATABASE_URL}
+      - HIPAA_ENCRYPTION_PASSWORD=${HIPAA_ENCRYPTION_PASSWORD:?Set HIPAA_ENCRYPTION_PASSWORD}
+      - HIPAA_ENCRYPTION_SALT=${HIPAA_ENCRYPTION_SALT:-guardian_hipaa_salt_2024}
       
       # Monitoring
       - PROMETHEUS_ENABLED=true
@@ -73,7 +73,7 @@ services:
     volumes:
       - redis_data:/data
     restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-guardian_redis_pass}
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?Set REDIS_PASSWORD}
     networks:
       - guardian-network
     profiles:
@@ -86,7 +86,7 @@ services:
     environment:
       - POSTGRES_DB=${POSTGRES_DB:-guardian_db}
       - POSTGRES_USER=${POSTGRES_USER:-guardian}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-guardian_password}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:

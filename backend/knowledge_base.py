@@ -47,19 +47,22 @@ class HIPAAEncryption:
         self.cipher = Fernet(self.key)
         
     def _get_or_generate_key(self) -> bytes:
-        """Get existing key or generate new one"""
-        key_file = "hipaa_encryption.key"
-        
-        if os.path.exists(key_file):
-            with open(key_file, 'rb') as f:
-                return f.read()
-        else:
-            # Generate new key
-            key = Fernet.generate_key()
-            with open(key_file, 'wb') as f:
-                f.write(key)
-            logger.info("🔐 Generated new HIPAA encryption key")
-            return key
+        """Derive a stable key from environment configuration when available."""
+        password = os.getenv("HIPAA_ENCRYPTION_PASSWORD")
+        if password:
+            salt = os.getenv("HIPAA_ENCRYPTION_SALT", "guardian_hipaa_salt_2024").encode()
+            kdf = PBKDF2HMAC(
+                algorithm=hashes.SHA256(),
+                length=32,
+                salt=salt,
+                iterations=100000,
+            )
+            return base64.urlsafe_b64encode(kdf.derive(password.encode()))
+
+        logger.warning(
+            "HIPAA_ENCRYPTION_PASSWORD is not set; using an ephemeral in-memory key"
+        )
+        return Fernet.generate_key()
     
     def encrypt_data(self, data: str) -> str:
         """Encrypt sensitive data"""

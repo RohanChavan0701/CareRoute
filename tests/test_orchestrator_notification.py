@@ -19,7 +19,7 @@ async def test_orchestrator_notification():
     booking_data = {
         "patient_id": "P001",
         "patient_name": "rohan",
-        "patient_email": "rohanpc@vt.edu",
+        "patient_email": "patient@example.com",
         "flight_number": "WN123",
         "flight_date": "2025-10-12",
         "hotel_booking_reference": "HOTEL_001",

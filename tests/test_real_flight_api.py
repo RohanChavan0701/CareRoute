@@ -5,11 +5,12 @@ Tests the complete trip flow using real flight data
 
 import asyncio
 import json
+import os
 import requests
 from datetime import datetime, timedelta
 
 BASE_URL = "http://localhost:8000"
-FLIGHT_API_URL = "http://54.158.27.0:8001/a2a"
+FLIGHT_API_URL = os.getenv("FLIGHT_AGENT_URL", "")
 
 def test_real_flight_api():
     """Test the real flight API directly"""

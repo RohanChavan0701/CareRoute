@@ -15,5 +15,6 @@ __pycache__/
 production.env
 venv/
 
-.hippa-encryption.key
+hipaa_encryption.key
+backend/hipaa_encryption.key
 codefest.pem

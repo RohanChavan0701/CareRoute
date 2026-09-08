@@ -6,7 +6,7 @@
 set -e
 
 # Configuration
-EC2_IP=${1:-"3.16.29.184"}
+EC2_IP=${1:-""}
 SSH_KEY_PATH=${2:-"deploy/codefest.pem"}
 EC2_USER=${3:-"ubuntu"}
 APP_DIR="/opt/guardian-orchestrator"
@@ -236,7 +236,7 @@ main() {
     if [ $# -lt 1 ]; then
         echo "Usage: $0 <EC2_IP> [SSH_KEY_PATH] [EC2_USER]"
         echo ""
-        echo "Example: $0 3.134.79.35 deploy/codefest.pem ubuntu"
+        echo "Example: $0 ec2-host.example.com deploy/codefest.pem ubuntu"
         exit 1
     fi
     

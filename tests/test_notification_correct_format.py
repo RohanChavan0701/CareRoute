@@ -24,7 +24,7 @@ async def test_correct_notification_format():
             "notification_type": "booking_confirmation",
             "recipients": [
                 {
-                    "email": "rohanpc@vt.edu",
+                    "email": "patient@example.com",
                     "name": "Rohan",
                     "preferred_method": "email"
                 }

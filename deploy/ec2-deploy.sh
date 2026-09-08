@@ -260,7 +260,7 @@ show_usage() {
     echo "  REGISTRY_URL            Docker registry URL"
     echo ""
     echo "Example:"
-    echo "  $0 -i 54.123.45.67 -k ~/.ssh/my-key.pem"
+    echo "  $0 -i ec2-host.example.com -k ~/.ssh/my-key.pem"
 }
 
 # Main execution
