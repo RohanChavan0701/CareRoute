@@ -192,8 +192,8 @@ docker-compose up guardian-orchestrator
 ## What Makes Guardian Special
 
 1. **True A2A Implementation**: One of the first real-world A2A protocol implementations
-2. **Healthcare Focus**: Designed specifically for medical tourism with HIPAA compliance
-3. **Microservices Architecture**: Each agent is a separate, scalable service
+2. **Healthcare Scenario**: Models medical-travel coordination without claiming regulatory compliance
+3. **Service Boundaries**: Each external agent is deployed and configured separately
 4. **Intelligent Coordination**: Automatic triggering based on flight ETA
 5. **Flutter Integration**: Seamless mobile app integration
 6. **AWS Native**: Built for cloud-scale deployment

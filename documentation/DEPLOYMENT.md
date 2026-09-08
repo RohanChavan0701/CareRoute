@@ -2,7 +2,7 @@
 
 ## 📋 Overview
 
-This guide covers deploying the Guardian A2A Orchestrator to AWS EC2 with Docker. The deployment includes health monitoring, security configurations, and production-ready settings.
+This guide describes the repository's AWS EC2 and Docker deployment scaffolding. It is a starting point for evaluation, not a production-readiness or security attestation.
 
 ## 🏗️ Architecture
 
@@ -121,7 +121,7 @@ HOTEL_AGENT_URL=https://hotel-agent.your-domain.com/a2a/tasks
 HOSPITAL_AGENT_URL=https://hospital-agent.your-domain.com/a2a/tasks
 VOICE_AGENT_URL=https://voice-agent.your-domain.com/a2a/tasks
 NOTIFICATION_AGENT_URL=https://notification-system-h36d.onrender.com/a2a/tasks
-FLIGHT_AGENT_URL=http://54.158.27.0:8001/a2a
+FLIGHT_AGENT_URL=https://flight-agent.example.com/a2a
 
 # Optional: LLM Integration
 OPENAI_API_KEY=your_openai_api_key_here
@@ -131,11 +131,11 @@ OPENAI_API_KEY=your_openai_api_key_here
 
 ```bash
 # Method 1: Using deployment script
-./deploy/ec2-deploy.sh -i 54.123.45.67 -k ~/.ssh/my-key.pem
+./deploy/ec2-deploy.sh -i ec2-host.example.com -k ~/.ssh/my-key.pem
 
 # Method 2: Manual deployment
-scp -i ~/.ssh/my-key.pem -r . ec2-user@54.123.45.67:/home/ec2-user/guardian/
-ssh -i ~/.ssh/my-key.pem ec2-user@54.123.45.67
+scp -i ~/.ssh/my-key.pem -r . ec2-user@ec2-host.example.com:/home/ec2-user/guardian/
+ssh -i ~/.ssh/my-key.pem ec2-user@ec2-host.example.com
 cd /home/ec2-user/guardian
 docker-compose up -d
 ```
@@ -302,7 +302,7 @@ docker-compose --profile with-postgres up -d
 2. **External Agent Connectivity**:
    ```bash
    # Test connectivity
-   curl -v http://54.158.27.0:8001/a2a
+   curl -v "$FLIGHT_AGENT_URL"
    curl -v https://notification-system-h36d.onrender.com/a2a/tasks
    ```
 
@@ -355,20 +355,4 @@ Access the monitoring dashboard at:
 - **Health Status**: `http://YOUR_EC2_IP:8000/ag-ui/health`
 - **API Documentation**: `http://YOUR_EC2_IP:8000/docs`
 
-### Contact Information
-
-For issues or questions:
-- **Technical Support**: [Your support email]
-- **Emergency Contact**: [Your emergency contact]
-- **Documentation**: [Your documentation URL]
-
----
-
-**🎉 Your Guardian A2A Orchestrator is now deployed and ready for production!**
-
-The system is designed to be:
-- ✅ **Highly Available**: Auto-restart and health monitoring
-- ✅ **Secure**: HIPAA-compliant with encryption
-- ✅ **Scalable**: Easy horizontal scaling
-- ✅ **Monitored**: Comprehensive health checks and logging
-- ✅ **Maintainable**: Simple update and backup procedures
+Successful startup only verifies that the configured process and health endpoint respond. Availability, security, scalability, monitoring coverage, backups, and regulated-data controls require separate deployment-specific validation.

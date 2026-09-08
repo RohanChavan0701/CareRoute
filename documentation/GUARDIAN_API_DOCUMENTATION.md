@@ -460,15 +460,14 @@ Currently, the API does not implement authentication. In production, you should 
 - API keys
 - Rate limiting
 
-### HIPAA Compliance
-- All patient data is encrypted at rest
-- Audit logging is enabled
-- Data retention policies are enforced
-- No PHI is logged in plain text
+### Security status
+- The repository includes field-encryption and audit helper modules.
+- The API does not yet implement authentication or prove end-to-end control coverage.
+- Treat the system as a prototype and do not use real patient data without a security and compliance review.
 
 ### A2A Protocol
 The orchestrator communicates with external agents using JSON-RPC 2.0:
-- Flight Agent: `http://54.158.27.0:8001/a2a`
+- Flight Agent: configure `FLIGHT_AGENT_URL`
 - Notification Agent: `https://notification-system-h36d.onrender.com/a2a/tasks`
 - Hotel/Hospital/Voice Agents: Configurable endpoints
 

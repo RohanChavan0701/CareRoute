@@ -223,36 +223,19 @@ Contact: +1-555-PATIENT
 
 ## 🔒 Security & Privacy
 
-### **HIPAA Compliance**
-- **No Medical Records**: Only coordination information shared
-- **Encrypted Communication**: All notifications encrypted
-- **Access Control**: Only authorized family contacts receive notifications
-- **Audit Trail**: All notifications logged
+### **Security status**
+- The examples are intended to minimize medical details in notification payloads.
+- Transport security, authorization, consent, and audit coverage depend on the configured external services and have not been verified end to end.
+- Do not use the prototype with real patient data without a security and compliance review.
 
 ### **Data Protection**
 - **Minimal Data**: Only necessary information shared
 - **Consent Management**: Patient controls family notifications
 - **Secure Channels**: All communications use secure protocols
 
-## 📊 Success Metrics
+## 📊 Evaluation status
 
-### **Family Satisfaction**
-- **Notification Speed**: < 30 seconds from flight landing
-- **Delivery Rate**: 99.9% family notification success
-- **Language Support**: 95% receive notifications in preferred language
-- **Family Engagement**: 90% families actively monitor notifications
-
-### **Hotel Operations**
-- **Preparation Time**: 30 minutes advance notice
-- **Room Readiness**: 100% rooms prepared before arrival
-- **Special Requirements**: 95% special needs accommodated
-- **Guest Satisfaction**: 98% positive check-in experience
-
-### **Transportation**
-- **Cab Arrival Time**: < 5 minutes from request
-- **Accessibility Compliance**: 100% wheelchair accessible vehicles
-- **Driver Communication**: 100% drivers receive passenger details
-- **On-time Performance**: 95% cabs arrive on schedule
+This repository contains no measured notification speed, delivery rate, satisfaction, room-readiness, accessibility, or transportation-performance results. The flow below is a demo scenario, not evidence of real-world outcomes.
 
 ## 🎯 Benefits
 
@@ -270,7 +253,7 @@ Contact: +1-555-PATIENT
 
 ### **For Patients**
 - ✅ **Seamless Arrival**: Transportation ready upon landing
-- ✅ **Accessibility**: Wheelchair accessible vehicles guaranteed
+- ✅ **Accessibility request**: Vehicle requirements are forwarded to the configured service
 - ✅ **Stress Reduction**: Everything arranged automatically
 - ✅ **Focus on Health**: No logistics to worry about
 

@@ -213,8 +213,8 @@ async def _check_treatment_updates(self):
 ### For Hackathon Judges
 - ✅ **Real-world problem** - medical tourism unpredictability
 - ✅ **Intelligent solution** - adaptive multi-agent system
-- ✅ **Production-ready** - comprehensive error handling
-- ✅ **Scalable architecture** - A2A protocol compliance
+- ✅ **Prototype error paths** - includes fallback and error-handling branches
+- ✅ **Service-oriented design** - uses A2A-style agent calls
 
 ## 🚀 Demo Scenarios
 
@@ -242,12 +242,9 @@ async def _check_treatment_updates(self):
 3. Guardian handles each seamlessly
 4. Maintains complete coordination
 
-## 📊 Success Metrics
+## 📊 Evaluation status
 
-- **Response Time**: < 30 seconds for extension coordination
-- **Accuracy**: 100% automatic agent coordination
-- **Coverage**: All aspects of stay managed automatically
-- **Reliability**: Graceful error handling and fallbacks
+No response-time, coordination-accuracy, coverage, or reliability measurements are committed for this workflow. The scenarios above describe intended demo behavior and should be validated against configured services before making outcome claims.
 
 ---
 

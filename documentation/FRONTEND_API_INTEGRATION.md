@@ -348,7 +348,7 @@ http://your-ec2-ip:8000  (or localhost:8000 for testing)
 ### **What Happens After Booking Creation:**
 
 1. **Immediate (0-5 seconds):**
-   - Booking saved to HIPAA-compliant database
+   - Booking passed to the configured database path
    - Orchestration workflow started
    - Confirmation email sent
    - FCM device registered
@@ -393,7 +393,7 @@ http://your-ec2-ip:8000  (or localhost:8000 for testing)
 
 ## 🔐 **SECURITY & COMPLIANCE**
 
-- **HIPAA Compliant:** All patient data encrypted at rest
+- **Security status:** Encryption helpers exist, but this prototype has not been audited or certified for regulated data
 - **Audit Logging:** All data access tracked
 - **CORS Enabled:** Frontend integration ready
 - **Input Validation:** All requests validated
@@ -458,4 +458,3 @@ For technical questions or issues:
 ---
 
 **Ready for integration! 🚀**
-
