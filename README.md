@@ -4,7 +4,7 @@ CareRoute is a team-built prototype for coordinating a medical-travel itinerary 
 
 ## Project ownership
 
-This is a collaborative repository; it should not be presented as the work of one contributor. Rohan Chavan's independently maintained contribution is the [CareRoute Flight Agent](https://github.com/rohanpc0701/Codefest_Flightapi), a standalone FastAPI service that exposes provider-backed flight status through an A2A-style JSON-RPC interface.
+This is a collaborative repository; it should not be presented as the work of one contributor. Rohan Chavan's independently maintained contribution is the [CareRoute Flight Agent](https://github.com/RohanChavan0701/careroute-flight-agent), a standalone FastAPI service that exposes provider-backed flight status through an A2A-style JSON-RPC interface.
 
 Related team components:
 
